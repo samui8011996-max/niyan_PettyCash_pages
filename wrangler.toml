@@ -1,0 +1,8 @@
+name = "niyan-pettycash"
+compatibility_date = "2025-06-01"
+pages_build_output_dir = "."
+
+[[d1_databases]]
+binding = "DB"
+database_name = "niyan-db"
+database_id = "d3c30bdf-c6fc-4990-bd22-5ea3b13d419e"

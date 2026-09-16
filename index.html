@@ -1,0 +1,1966 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>零用金記帳 · 泥研製所</title>
+
+<link rel="icon" type="image/png" href="LOGO.png">
+
+<link rel="apple-touch-icon" href="LOGO.png">
+<link rel="apple-touch-icon" sizes="152x152" href="LOGO.png">
+<link rel="apple-touch-icon" sizes="180x180" href="LOGO.png">
+<link rel="apple-touch-icon" sizes="167x167" href="LOGO.png">
+
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#f4f1ea">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="泥研零用金">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=Noto+Serif+TC:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f4f1ea; --bg-card: #fbf9f4; --ink: #1a1a1a;
+    --ink-soft: #5a5a5a; --ink-faded: #8a8a8a;
+    --line: #d9d3c5; --line-soft: #e8e2d4;
+    --accent: #8b2c2c; --accent-soft: #c4a574;
+    --green: #3d5a2c; --red: #8b2c2c; --live: #2d7a4f;
+    --shadow: 0 1px 2px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.04);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Noto Serif TC', serif; background: var(--bg); color: var(--ink);
+    line-height: 1.6; min-height: 100vh;
+    background-image:
+      radial-gradient(circle at 20% 0%, rgba(196, 165, 116, 0.08) 0%, transparent 50%),
+      radial-gradient(circle at 80% 100%, rgba(139, 44, 44, 0.05) 0%, transparent 50%);
+  }
+  .container { max-width: 1200px; margin: 0 auto; padding: 32px 24px 80px; }
+  header {
+    text-align: center; padding: 24px 0 40px;
+    border-bottom: 1px solid var(--line); margin-bottom: 40px; position: relative;
+  }
+  header::before {
+    content: "  "; position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+    font-family: 'Fraunces', serif; font-size: 11px; letter-spacing: 0.3em;
+    color: var(--ink-faded); text-transform: uppercase;
+  }
+  .logo-img {
+    display: block;
+    margin: 8px auto 4px;
+    width: 150px;
+    height: auto;
+  }
+  @media (max-width: 640px) {
+    .logo-img { width: 150px; }
+  }
+  h1 .zh { font-family: 'Noto Serif TC', serif; font-weight: 500; margin-left: 12px; }
+ .subtitle { margin-top: 10px; font-size: 13px; color: var(--ink-soft); font-style: normal; font-weight: 700; }
+  .balance-bar {
+    background: #333736;color: var(--bg-card); border-radius: 14px;
+    padding: 20px 28px; margin-bottom: 36px; display: flex;
+    justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;
+    box-shadow: var(--shadow);
+  }
+  .balance-bar .item { display: flex; flex-direction: column; }
+  .balance-bar .label {
+    font-size: 10px; letter-spacing: 0.25em; text-transform: uppercase;
+    color: var(--accent-soft); font-family: 'Fraunces', serif;
+  }
+  .balance-bar .value { font-family: 'JetBrains Mono', monospace; font-size: 22px; font-weight: 500; margin-top: 4px; }
+  .balance-bar .value.total { font-size: 28px; color: var(--accent-soft); }
+  .sync-status {
+    font-size: 12px; padding: 4px 10px; border: 1px solid rgba(196, 165, 116, 0.4);
+    border-radius: 12px; color: var(--accent-soft);
+    display: flex; align-items: center; gap: 6px;
+  }
+  .sync-status.connected { color: #8fbc7a; border-color: rgba(143, 188, 122, 0.5); }
+  .sync-status .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+  .sync-status.connected .dot { animation: pulse 2s infinite; }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+ .tabs {
+  display: flex; gap: 4px; padding: 5px;
+  background: rgba(26,26,26,0.04);
+  border: 1px solid var(--line-soft);
+  border-radius: 12px;
+  overflow-x: auto; -webkit-overflow-scrolling: touch;
+  margin-bottom: 24px;
+}
+.tab {
+  flex: 1 0 auto; min-width: 60px;
+  padding: 11px 16px; background: transparent; border: none;
+  border-radius: 8px;
+  font-family: 'Noto Serif TC', serif; font-size: 15px; color: var(--ink-soft);
+  cursor: pointer; white-space: nowrap; text-align: center;
+  transition: all 0.2s ease;
+}
+.tab:hover { color: var(--ink); background: rgba(255,255,255,0.55); }
+.tab.active {
+  color: var(--accent); background: var(--bg-card);
+  font-weight: 500;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+.tab .num { font-family: 'Fraunces', serif; font-style: italic; font-size: 12px; margin-right: 6px; opacity: 0.7; }
+  .panel {
+  background: var(--bg-card); padding: 32px;
+  border: 1px solid var(--line); border-radius: 10px;
+  margin-bottom: 32px; display: none; box-shadow: var(--shadow);
+}
+  .panel.active { display: block; animation: fadeIn 0.3s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+  .panel-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 24px; padding-bottom: 16px;
+    border-bottom: 1px solid var(--line-soft); flex-wrap: wrap; gap: 12px;
+  }
+  .panel-title { font-family: 'Fraunces', serif; font-size: 22px; font-weight: 400; }
+  .panel-title .en {
+    font-style: italic; color: var(--ink-faded);
+    font-size: 14px; margin-left: 10px; letter-spacing: 0.05em;
+  }
+  label {
+    display: block; font-size: 12px; letter-spacing: 0.1em; color: var(--ink-soft);
+    margin-bottom: 6px; text-transform: uppercase;
+    font-family: 'Fraunces', serif; font-weight: 500;
+  }
+  input[type="text"], input[type="number"], input[type="date"], select, textarea {
+    width: 100%; padding: 10px 12px; border: 1px solid var(--line); background: white;
+    font-family: 'Noto Serif TC', serif; font-size: 15px; color: var(--ink);
+    border-radius: 2px; transition: border-color 0.2s;
+  }
+  input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); }
+  .form-row { display: grid; gap: 16px; margin-bottom: 16px; }
+  .form-row.cols-2 { grid-template-columns: 1fr 1fr; }
+  .form-row.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+  @media (max-width: 700px) {
+    .form-row.cols-2, .form-row.cols-3 { grid-template-columns: 1fr; }
+  }
+  .btn {
+    padding: 10px 24px; font-family: 'Noto Serif TC', serif; font-size: 14px;
+    cursor: pointer; border-radius: 2px; transition: all 0.2s;
+    border: 1px solid var(--ink); background: #333736;color: var(--bg-card);
+    letter-spacing: 0.05em;
+  }
+  .btn:hover { background: var(--accent); border-color: var(--accent); }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn-outline { background: transparent; color: var(--ink); }
+  .btn-outline:hover { background: #333736;color: var(--bg-card); }
+  .btn-small { padding: 6px 14px; font-size: 13px; }
+  .btn-danger { background: var(--red); border-color: var(--red); }
+  .btn-danger:hover { background: #6b1f1f; border-color: #6b1f1f; }
+  .shared-banner {
+    background: linear-gradient(90deg, rgba(45, 122, 79, 0.08), rgba(45, 122, 79, 0.02));
+    border-left: 3px solid var(--live);
+    padding: 12px 16px; margin-bottom: 20px;
+    display: flex; align-items: center; gap: 10px; font-size: 13px;
+  }
+  .shared-banner.offline {
+    background: linear-gradient(90deg, rgba(139, 44, 44, 0.06), rgba(139, 44, 44, 0.01));
+    border-left-color: var(--accent); color: var(--accent);
+  }
+  .shared-banner .live-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--live); animation: pulse 2s infinite;
+  }
+  .shared-banner.offline .live-dot { background: var(--accent); animation: none; }
+  .bento-date {
+    display: flex; align-items: center; gap: 12px; margin-bottom: 20px;
+    padding: 14px 18px; background: white; border: 1px solid var(--line); flex-wrap: wrap;
+  }
+  .bento-date .refresh-btn {
+    margin-left: auto; background: none; border: 1px solid var(--line);
+    padding: 6px 12px; cursor: pointer; font-size: 12px; color: var(--ink-soft);
+    border-radius: 8px;; font-family: 'Noto Serif TC', serif;
+  }
+  .bento-date .refresh-btn:hover { background: #333736;color: white; border-color: var(--ink); border-radius: 10px;}
+  .bento-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+    gap: 14px; margin-bottom: 24px;
+  }
+  .bento-card {
+    background: white; border: 1px solid var(--line);
+    padding: 16px; transition: all 0.2s; position: relative;
+    border-radius: 12px;
+  }
+  .bento-card.has-selection { border-color: var(--accent); background: #fff9f5; }
+  .bento-card.confirmed { border-color: var(--live); background: #f4f9f4; }
+  .bento-card.confirmed::after {
+    content: "✓ 已上傳"; position: absolute; top: 10px; right: 10px;
+    font-size: 10px; padding: 2px 8px; background: var(--live); color: white;
+    border-radius: 10px; letter-spacing: 0.05em; font-family: 'Fraunces', serif;
+  }
+  .bento-card .name {
+    font-weight: 500; font-size: 16px; margin-bottom: 10px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .bento-card .price-tag {
+    font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--live);
+  }
+  .bento-card.has-selection .price-tag { color: var(--accent); }
+  .bento-card select { margin-bottom: 8px; }
+  .bento-card .item-list { list-style: none; margin-bottom: 8px; }
+  .bento-card .item-row-group {
+    padding: 6px 0; border-bottom: 1px dashed var(--line-soft);
+  }
+  .bento-card .item-row-group:last-child { border-bottom: none; }
+  .bento-card .item-row {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 13px;
+  }
+  .bento-card .item-row .item-name { flex: 1; }
+  .bento-card .item-row .item-price {
+    font-family: 'JetBrains Mono', monospace; color: var(--live); white-space: nowrap;
+  }
+  .bento-card .item-row .item-price.pending { color: var(--accent); }
+  .bento-card .item-row .item-tag {
+    font-size: 10px; color: var(--live); white-space: nowrap;
+  }
+  .bento-card .item-row .less-rice-inline {
+    display: flex; align-items: center; gap: 3px;
+    font-size: 11px; color: var(--ink-soft); cursor: pointer; white-space: nowrap;
+  }
+  .bento-card .item-row .less-rice-inline input { width: auto; margin: 0; accent-color: var(--live); }
+  .bento-card .item-row .remove-item-btn {
+    background: none; border: none; color: var(--ink-faded); cursor: pointer;
+    font-size: 16px; line-height: 1; padding: 0 2px;
+  }
+  .bento-card .variant-picker {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 11px; color: var(--ink-soft);
+    margin-top: 4px; padding-left: 2px; flex-wrap: wrap;
+  }
+  .bento-card .variant-picker .variant-label { font-weight: 600; color: var(--accent); }
+  .bento-card .variant-picker label { display: flex; align-items: center; gap: 3px; cursor: pointer; }
+  .bento-card .variant-picker input { width: auto; margin: 0; accent-color: var(--accent); }
+  .order-summary {
+    background: white; border: 1px solid var(--line);
+    padding: 18px; margin-bottom: 20px;border-radius: 10px;
+  }
+  .order-summary h3 {
+    font-family: 'Fraunces', serif; font-weight: 500; font-size: 16px;
+    margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px dashed var(--line);
+  }
+  .order-list { list-style: none; margin-bottom: 12px; }
+  .order-list li { display: flex; justify-content: space-between; padding: 6px 0; font-size: 14px; }
+  .order-list li .meta { font-size: 12px; color: var(--ink-faded); font-style: italic; margin-left: 8px; }
+  .order-list li .amount { font-family: 'JetBrains Mono', monospace; color: var(--red); }
+  .order-list li.confirmed-row .amount::before { content: "✓ "; color: var(--live); }
+  .order-total {
+    display: flex; justify-content: space-between; padding-top: 10px;
+    border-top: 1px solid var(--line); font-weight: 600;
+  }
+  .order-total .amount {
+    font-family: 'JetBrains Mono', monospace; color: var(--red); font-size: 18px;
+  }
+  .settle-grid {
+    display: grid; grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px; margin-top: 14px; padding-top: 14px;
+    border-top: 2px solid var(--ink);
+  }
+  @media (max-width: 600px) {
+    .settle-grid { grid-template-columns: 1fr; gap: 8px; }
+  }
+  .settle-item {
+    background: var(--bg); padding: 12px 14px;
+    border: 1px solid var(--line); border-radius: 8px;
+    display: flex; flex-direction: column; gap: 4px;
+  }
+  .settle-item.total {
+    background: #333736;color: var(--bg-card); border-color: var(--ink);
+  }
+  .settle-item.bento { border-left: 3px solid var(--accent); }
+  .settle-item.subsidy { border-left: 3px solid var(--accent-soft); }
+  .settle-item .s-label {
+    font-family: 'Fraunces', serif; font-size: 13px; font-weight: 500;
+    display: flex; justify-content: space-between; align-items: baseline;
+  }
+  .settle-item .s-hint {
+    font-size: 10px; font-style: italic; opacity: 0.7;
+    letter-spacing: 0.05em; font-weight: 400;
+  }
+  .settle-item .s-amount {
+    font-family: 'JetBrains Mono', monospace; font-size: 20px; font-weight: 600;
+  }
+  .settle-item.total .s-amount { font-size: 22px; color: var(--accent-soft); }
+  .product-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 10px; margin-bottom: 20px;
+  }
+  .product-card {
+    background: white; border: 1px solid var(--line);
+    padding: 12px 10px; text-align: center; cursor: pointer;
+    transition: all 0.15s; position: relative;
+  }
+  .product-card:hover { border-color: var(--accent); transform: translateY(-1px); }
+  .product-card .p-name { font-size: 14px; margin-bottom: 4px; }
+  .product-card .p-price { font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--accent); }
+  .product-card .p-qty {
+    position: absolute; top: -8px; right: -8px;
+    background: var(--accent); color: white;
+    width: 24px; height: 24px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 600;
+  }
+  .cart-box { background: white; border: 1px solid var(--line); padding: 18px; margin-bottom: 16px; }
+  .cart-list { list-style: none; margin-bottom: 12px; }
+  .cart-list li {
+    display: grid; grid-template-columns: 1fr auto auto auto; gap: 10px;
+    padding: 8px 0; border-bottom: 1px dashed var(--line-soft);
+    align-items: center; font-size: 14px;
+  }
+  .cart-list li .cart-qty-btn {
+    background: var(--bg); border: 1px solid var(--line);
+    width: 26px; height: 26px; cursor: pointer; font-family: 'JetBrains Mono', monospace;
+  }
+  .cart-list li .cart-qty-btn:hover { background: var(--accent); color: white; border-color: var(--accent); }
+  .cart-list li .subtotal {
+    font-family: 'JetBrains Mono', monospace; color: var(--green);
+    min-width: 70px; text-align: right;
+  }
+  .cart-discount-row {
+    display: grid; grid-template-columns: auto 1fr 1fr;
+    gap: 10px; align-items: center; margin: 12px 0;
+    padding: 10px; background: var(--bg);
+  }
+  .cart-discount-row label { margin: 0; }
+  .cart-total {
+    display: flex; justify-content: space-between; padding-top: 12px;
+    border-top: 2px solid var(--ink); font-weight: 600; font-size: 18px;
+  }
+  .cart-total .amount { font-family: 'JetBrains Mono', monospace; color: var(--green); }
+.records-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.record-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  font-size: 14px;
+  min-width: 520px; /* 強制最小寬度，超出就橫捲 */
+}
+.record-table th {
+  background: #333736;color: var(--bg-card);
+  padding: 10px 10px; text-align: left;
+  font-family: 'Fraunces', serif; font-weight: 500;
+  font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase;
+  white-space: nowrap;
+}
+.record-table td {
+  padding: 10px 10px;
+  border-bottom: 1px solid var(--line-soft);
+  white-space: nowrap; /* 每格文字不換行 */
+  vertical-align: middle;
+}
+.record-table tr:hover td { background: var(--bg); }
+.record-table tr.row-selected td { background: #fff5f5 !important; }
+.record-table .date-col {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+/* 項目欄允許換行，避免長文字撐爆整表 */
+.record-table td:nth-child(3) {
+  white-space: normal;
+  min-width: 160px;
+  max-width: 999px; /* 不限制，讓它自然撐開 */
+  word-break: break-word;
+  line-height: 1.6;
+}
+/* 固定其他欄寬，保護它們不被項目欄擠壓 */
+.record-table th:nth-child(1),
+.record-table td:nth-child(1) { width: 36px; }   /* checkbox */
+
+.record-table th:nth-child(2),
+.record-table td:nth-child(2) { width: 90px; }   /* 日期 */
+
+.record-table th:nth-child(4),
+.record-table td:nth-child(4) { width: 80px; }   /* 收入 */
+
+.record-table th:nth-child(5),
+.record-table td:nth-child(5) { width: 80px; }   /* 支出 */
+
+.record-table th:nth-child(6),
+.record-table td:nth-child(6) { width: 60px; }   /* 經手人 */
+.record-table .amount-in {
+  color: var(--green);
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.record-table .amount-out {
+  color: var(--red);
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.record-table .check-col { width: 36px; text-align: center; padding: 10px 4px; }
+.record-table .check-col input { width: 18px; height: 18px; cursor: pointer; accent-color: var(--accent); }
+  .records-filter { display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
+  .records-filter input[type="text"], .records-filter select { width: auto; flex: 1; min-width: 140px; }
+  .records-filter .date-filter-group {
+    display: flex; align-items: center; gap: 6px;
+    flex: 1; min-width: 200px;
+  }
+  .records-filter .date-filter-group input[type="date"] {
+    flex: 1; min-width: 130px;
+  }
+  .records-filter .date-clear-btn {
+    background: none; border: 1px solid var(--line);
+    padding: 8px 12px; cursor: pointer; font-size: 12px;
+    color: var(--ink-soft); border-radius: 2px;
+    font-family: 'Noto Serif TC', serif; white-space: nowrap;
+  }
+  .records-filter .date-clear-btn:hover { background: #333736;color: white; border-color: var(--ink); }
+  .records-filter .date-clear-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .delete-bar {
+    display: flex; justify-content: space-between; align-items: center;
+    background: white; border: 1px solid var(--line); padding: 10px 14px;
+    margin-bottom: 12px; flex-wrap: wrap; gap: 10px;
+  }
+  .delete-bar.has-selection { border-color: var(--accent); background: #fff9f5; }
+  .delete-bar .selection-info {
+    font-size: 13px; color: var(--ink-soft);
+    font-family: 'Fraunces', serif;
+  }
+  .delete-bar .selection-info strong { color: var(--accent); font-weight: 600; }
+  .delete-bar .actions { display: flex; gap: 8px; }
+  .empty-state { text-align: center; padding: 40px 20px; color: var(--ink-faded); font-style: italic; }
+  .toast {
+    position: fixed; bottom: 30px; right: 30px;
+    background: #333736;color: var(--bg-card);
+    padding: 12px 20px; border-radius: 2px; font-size: 14px;
+    z-index: 1000; opacity: 0; transform: translateY(10px); transition: all 0.3s;
+    max-width: 320px; box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+  }
+  .toast.show { opacity: 1; transform: translateY(0); }
+  .toast.success { background: var(--green); }
+  .toast.error { background: var(--red); }
+  .modal-backdrop {
+    position: fixed; inset: 0; background: rgba(26, 26, 26, 0.5);
+    display: none; align-items: center; justify-content: center;
+    z-index: 900; padding: 20px;
+  }
+  .modal-backdrop.show { display: flex; }
+  .modal {
+    background: var(--bg-card); padding: 32px;
+    max-width: 560px; width: 100%; max-height: 90vh;
+    overflow-y: auto; border: 1px solid var(--line);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+  }
+  .modal h2 { font-family: 'Fraunces', serif; font-weight: 400; margin-bottom: 16px; }
+  .modal .field-group { margin-bottom: 14px; }
+  .modal .help-text {
+    font-size: 12px; color: var(--ink-soft); margin-top: 4px;
+    font-style: italic; line-height: 1.5;
+  }
+  .modal-actions {
+    display: flex; gap: 10px; justify-content: flex-end;
+    margin-top: 20px; padding-top: 16px;
+    border-top: 1px solid var(--line-soft); flex-wrap: wrap;
+  }
+  .delete-preview-list {
+    list-style: none; margin: 12px 0;
+    max-height: 240px; overflow-y: auto;
+    background: white; border: 1px solid var(--line);
+  }
+  .delete-preview-list li {
+    padding: 8px 12px; border-bottom: 1px dashed var(--line-soft);
+    font-size: 13px; display: flex; justify-content: space-between; gap: 10px;
+  }
+  .delete-preview-list li:last-child { border-bottom: none; }
+  .delete-preview-list .d-date {
+    font-family: 'JetBrains Mono', monospace; color: var(--ink-faded); font-size: 12px;
+  }
+  .delete-preview-list .d-amount {
+    font-family: 'JetBrains Mono', monospace; font-weight: 500;
+  }
+  .delete-preview-list .d-amount.income { color: var(--green); }
+  .delete-preview-list .d-amount.expense { color: var(--red); }
+  .settings-btn {
+  position: absolute; top: 20px; right: 20px; background: none;
+  border: 1px solid var(--line); width: 36px; height: 36px;
+  cursor: pointer; border-radius: 10px; color: var(--ink-soft);
+  display: flex; align-items: center; justify-content: center;
+}
+  .settings-btn:hover { background: #333736;color: var(--bg-card); }
+  .stats-row {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 12px; margin-bottom: 20px;
+  }
+  .stat-box { background: white; border: 1px solid var(--line); padding: 14px; }
+  .stat-box .stat-label {
+    font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase;
+    color: var(--ink-faded); font-family: 'Fraunces', serif;
+  }
+  .stat-box .stat-value {
+    font-family: 'JetBrains Mono', monospace; font-size: 20px;
+    margin-top: 4px; font-weight: 500;
+  }
+  .stat-box.income .stat-value { color: var(--green); }
+  .stat-box.expense .stat-value { color: var(--red); }
+
+  .lunch-settle-box {
+    background: white; border: 1px solid var(--line);
+    padding: 20px; margin-bottom: 24px;
+  }
+  .settle-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 16px; padding-bottom: 12px;
+    border-bottom: 1px dashed var(--line);
+    flex-wrap: wrap; gap: 10px;
+  }
+  .settle-header h3 {
+    font-family: 'Fraunces', serif; font-weight: 500;
+    font-size: 17px;
+  }
+  .settle-date-pick { display: flex; gap: 8px; align-items: center; }
+  .settle-date-pick input { width: auto; }
+  .settle-content .settle-grid { margin-top: 0; padding-top: 0; border-top: none; }
+  .settle-list {
+    list-style: none; margin: 12px 0; padding: 10px;
+    background: var(--bg); font-size: 13px;
+    max-height: 200px; overflow-y: auto;
+  }
+  .settle-list li {
+    display: flex; justify-content: space-between;
+    padding: 4px 0; border-bottom: 1px dashed var(--line-soft);
+  }
+  .settle-list li:last-child { border-bottom: none; }
+  .settle-list li .s-type {
+    font-size: 10px; padding: 1px 6px; border-radius: 8px;
+    margin-left: 6px; font-family: 'Fraunces', serif;
+  }
+  .settle-list li .s-type.bento { background: var(--accent); color: white; }
+  .settle-list li .s-type.subsidy { background: var(--accent-soft); color: var(--ink); }
+  .divider { height: 1px; background: var(--line); margin: 20px 0; }
+  @media (max-width: 640px) {
+  .tab { padding: 10px 10px; font-size: 14px; min-width: 56px; }
+}
+/* ===== 圓潤化補丁:按鈕 + 卡片統一圓角 ===== */
+  .btn { border-radius: 10px; }
+  .btn-small { border-radius: 8px; }
+  .settings-btn { border-radius: 10px; }
+  .records-filter .date-clear-btn { border-radius: 8px; }
+  .cart-list li .cart-qty-btn { border-radius: 7px; }
+
+  input[type="text"], input[type="number"], input[type="date"],
+  select, textarea { border-radius: 8px; }
+
+  .product-card     { border-radius: 10px; }
+  .stat-box         { border-radius: 10px; }
+  .bento-date       { border-radius: 10px; }
+  .delete-bar       { border-radius: 10px; }
+  .cart-discount-row{ border-radius: 8px; }
+  .settle-list      { border-radius: 8px; }
+  .delete-preview-list { border-radius: 8px; }
+  .cart-box         { border-radius: 12px; }
+  .lunch-settle-box { border-radius: 12px; }
+  .modal            { border-radius: 14px; }
+  .toast            { border-radius: 10px; }
+  .cancel-bento-btn {
+    display: block; width: fit-content; margin: 8px 0 0 auto;
+    padding: 3px 12px; font-size: 11px;
+    font-family: 'Noto Serif TC', serif;
+    background: none; border: 1px solid var(--live);
+    color: var(--live); border-radius: 999px; cursor: pointer;
+    transition: all 0.2s;
+  }
+  .cancel-bento-btn:hover { background: var(--live); color: #fff; }
+  .cancel-bento-btn:hover { background: var(--live); color: #fff; }
+
+  /* 記錄表格:用外框包成圓角(深色表頭的上方兩角也會跟著圓) */
+  .records-wrap { border: 1px solid var(--line); border-radius: 12px; }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+<img src="icon.png" alt="泥研製所" class="logo-img">
+<div class="subtitle">— 泥研製所 零用金 —</div>
+  </header>
+
+  <div class="balance-bar">
+    <div class="item">
+      <span class="label">Total Income</span>
+      <span class="value" id="totalIncome">NT$ —</span>
+    </div>
+    <div class="item">
+      <span class="label">Total Expense</span>
+      <span class="value" id="totalExpense">NT$ —</span>
+    </div>
+    <div class="item">
+      <span class="label">Balance</span>
+      <span class="value total" id="totalBalance">NT$ —</span>
+    </div>
+    <div class="sync-status" id="syncStatus"><span class="dot"></span><span id="syncText">未連線</span></div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" data-panel="bento"><span class="num"></span>點餐</button>
+    <button class="tab" data-panel="package"><span class="num"></span>包裹</button>
+    <button class="tab" data-panel="sales"><span class="num"></span>銷售</button>
+    <button class="tab" data-panel="extra"><span class="num"></span>收支</button>
+    <button class="tab" data-panel="records"><span class="num"></span>記錄</button>
+  </div>
+
+  <div class="panel active" id="panel-bento">
+    <div class="panel-header">
+      <div class="panel-title">點餐 <span class="en">Lunch Order</span></div>
+    </div>
+    <div class="shared-banner" id="sharedBanner">
+      <span class="live-dot"></span>
+     <span id="sharedBannerText">即時共用模式</span>
+    </div>
+    <div class="bento-date">
+      <label style="margin:0;">日期</label>
+      <input type="date" id="bentoDate" style="width:auto;" onchange="onBentoDateChange()">
+      <span style="font-size:13px; color:var(--ink-soft);" id="bentoCountHint">尚未選擇</span>
+      <button class="refresh-btn" onclick="refreshAll()">↻ 手動同步</button>
+    </div>
+    <div class="bento-grid" id="bentoGrid"></div>
+    <div class="order-summary" id="orderSummary" style="display:none;">
+      <h3>訂單摘要</h3>
+      <ul class="order-list" id="orderList"></ul>
+      <div class="settle-grid">
+        <div class="settle-item bento">
+          <span class="s-label">便當款 <span class="s-hint">給便當店</span></span>
+          <span class="s-amount" id="settleBento">$0</span>
+        </div>
+        <div class="settle-item subsidy">
+          <span class="s-label">補貼款 <span class="s-hint">發給員工</span></span>
+          <span class="s-amount" id="settleSubsidy">$0</span>
+        </div>
+        <div class="settle-item total">
+          <span class="s-label">總餐費 <span class="s-hint">零用金支出</span></span>
+          <span class="s-amount" id="settleTotal">$0</span>
+        </div>
+      </div>
+    </div>
+    <div class="form-row cols-2">
+      <div>
+        <label>經手人(登記人)</label>
+        <select id="bentoHandler"></select>
+      </div>
+      <div style="display:flex; align-items:flex-end; gap:10px;">
+        <button class="btn" onclick="submitBento()" style="flex:1;" id="submitBentoBtn">上傳未上傳的選擇</button>
+      </div>
+    </div>
+    <input type="text" id="bentoHandlerOther" placeholder="其他經手人姓名" style="display:none; margin-top:8px;">
+    <p style="margin-top:10px; font-size:12px; color:var(--ink-soft); font-style:italic;">
+      💡 上傳後會寫入 Google Sheet 主表,✓ 綠色標記者為已上傳。已上傳的選擇不會重複送出。
+    </p>
+  </div>
+
+  <div class="panel" id="panel-package">
+    <div class="panel-header">
+      <div class="panel-title">包裹 <span class="en">Package Fee</span></div>
+    </div>
+    <div class="form-row cols-3">
+      <div><label>日期</label><input type="date" id="pkgDate"></div>
+      <div>
+        <label>物流公司</label>
+        <select id="pkgCompany">
+          <option value="黑貓">黑貓</option>
+          <option value="新竹物流">新竹物流</option>
+          <option value="嘉里">嘉里</option>
+          <option value="郵局">郵局</option>
+          <option value="其他">其他</option>
+        </select>
+      </div>
+      <div><label>代收款項(元)</label><input type="number" id="pkgAmount" placeholder="0" min="0"></div>
+    </div>
+    <input type="text" id="pkgCompanyOther" placeholder="請輸入其他物流公司名稱" style="display:none; margin-bottom:12px;">
+    <div class="form-row cols-2">
+      <div><label>經手人</label><select id="pkgHandler"></select></div>
+      <div style="display:flex; align-items:flex-end;">
+        <button class="btn" id="submitPackageBtn" onclick="submitPackage()" style="width:100%;">登記包裹支出</button>
+      </div>
+    </div>
+    <input type="text" id="pkgHandlerOther" placeholder="其他經手人姓名" style="display:none; margin-top:8px;">
+  </div>
+
+  <div class="panel" id="panel-sales">
+    <div class="panel-header">
+      <div class="panel-title">銷售 <span class="en">Sales</span></div>
+      <span style="font-size:13px; color:var(--ink-soft); font-style:italic;">點擊商品加入購物車</span>
+    </div>
+    <div><label>日期</label><input type="date" id="salesDate" style="max-width:200px;"></div>
+    <div class="divider"></div>
+    <div class="product-grid" id="productGrid"></div>
+    <div style="margin-bottom:14px;">
+      <label>其他商品</label>
+      <div class="form-row cols-3" style="margin-bottom:0;">
+        <input type="text" id="otherProductName" placeholder="商品名稱">
+        <input type="number" id="otherProductPrice" placeholder="金額">
+        <button class="btn btn-outline" onclick="addOtherProduct()">加入購物車</button>
+      </div>
+    </div>
+    <div class="cart-box" id="cartBox" style="display:none;">
+      <h3 style="font-family:'Fraunces',serif; font-weight:500; margin-bottom:12px;">購物車</h3>
+      <ul class="cart-list" id="cartList"></ul>
+      <div class="cart-discount-row">
+        <label style="white-space:nowrap;">折扣</label>
+        <select id="discountType">
+  <option value="none">無折扣</option>
+  <option value="percent">打折 (例: 9 = 九折)</option>
+  <option value="amount">折抵金額</option>
+  <option value="employee">員工價</option>
+</select>
+        <input type="number" id="discountValue" placeholder="數值" step="0.1">
+      </div>
+      <div class="cart-total">
+        <span>應收</span>
+        <span class="amount" id="cartTotal">NT$ 0</span>
+      </div>
+      <div style="margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--line); display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+        <div>
+          <label>實收金額</label>
+          <input type="number" id="cashReceived" placeholder="輸入收到的金額" oninput="calculateChange()">
+        </div>
+        <div>
+          <label>找零</label>
+          <div id="cashChange" style="font-family: 'JetBrains Mono', monospace; font-size: 18px; font-weight: 600; color: var(--accent); padding: 8px 0;">NT$ 0</div>
+        </div>
+      </div>
+    </div>
+    <div class="form-row cols-2" style="margin-top:16px;">
+      <div><label>經手人</label><select id="salesHandler"></select></div>
+      <div style="display:flex; align-items:flex-end;">
+        <button class="btn" id="submitSalesBtn" onclick="submitSales()" style="width:100%;">登記銷售收入</button>
+      </div>
+    </div>
+    <input type="text" id="salesHandlerOther" placeholder="其他經手人姓名" style="display:none; margin-top:8px;">
+  </div>
+
+  <div class="panel" id="panel-extra">
+    <div class="panel-header">
+      <div class="panel-title">額外收支 <span class="en">Misc. Income & Expense</span></div>
+    </div>
+    <h3 style="font-family:'Fraunces',serif; font-weight:500; font-size:17px; margin-bottom:14px; color:var(--green);">① 零用金補充</h3>
+    <div class="form-row cols-3">
+      <div><label>日期</label><input type="date" id="refillDate"></div>
+      <div><label>補充金額</label><input type="number" id="refillAmount" placeholder="0" min="0"></div>
+      <div>
+        <label>登記人</label>
+        <select id="refillHandler">
+          <option>妍儒</option><option>佳宜</option><option>維妮</option><option>其他</option>
+        </select>
+      </div>
+    </div>
+    <input type="text" id="refillHandlerOther" placeholder="其他登記人姓名" style="display:none; margin-bottom:12px;">
+    <button class="btn" id="submitRefillBtn" onclick="submitRefill()">登記零用金補充</button>
+    <div class="divider"></div>
+    <h3 style="font-family:'Fraunces',serif; font-weight:500; font-size:17px; margin-bottom:14px; color:var(--green);">② 其他收入</h3>
+    <div class="form-row cols-3">
+      <div><label>日期</label><input type="date" id="incomeDate"></div>
+      <div><label>金額</label><input type="number" id="incomeAmount" placeholder="0" min="0"></div>
+      <div><label>事由</label><input type="text" id="incomeReason" placeholder="請寫事由"></div>
+    </div>
+    <div class="form-row cols-2">
+      <div><label>經手人</label><select id="incomeHandler"></select></div>
+      <div style="display:flex; align-items:flex-end;">
+        <button class="btn" id="submitIncomeBtn" onclick="submitIncome()" style="width:100%;">登記其他收入</button>
+      </div>
+    </div>
+    <input type="text" id="incomeHandlerOther" placeholder="其他經手人姓名" style="display:none; margin-top:8px;">
+    <div class="divider"></div>
+    <h3 style="font-family:'Fraunces',serif; font-weight:500; font-size:17px; margin-bottom:14px; color:var(--red);">③ 其他支出</h3>
+    <div class="form-row cols-3">
+      <div><label>日期</label><input type="date" id="expenseDate"></div>
+      <div><label>金額</label><input type="number" id="expenseAmount" placeholder="0" min="0"></div>
+      <div><label>事由</label><input type="text" id="expenseReason" placeholder="請寫事由"></div>
+    </div>
+    <div class="form-row cols-2">
+      <div><label>經手人</label><select id="expenseHandler"></select></div>
+      <div style="display:flex; align-items:flex-end;">
+        <button class="btn btn-danger" id="submitExpenseBtn" onclick="submitExpense()" style="width:100%;">登記其他支出</button>
+      </div>
+    </div>
+    <input type="text" id="expenseHandlerOther" placeholder="其他經手人姓名" style="display:none; margin-top:8px;">
+  </div>
+
+  <div class="panel" id="panel-records">
+    <div class="panel-header">
+      <div class="panel-title">記錄 <span class="en">All Records</span></div>
+      <div style="display:flex; gap:8px;">
+        <button class="btn btn-outline btn-small" onclick="refreshAll()">↻ 重新載入</button>
+      </div>
+    </div>
+    <div class="stats-row">
+      <div class="stat-box income"><div class="stat-label">本月收入</div><div class="stat-value" id="monthIncome">—</div></div>
+      <div class="stat-box expense"><div class="stat-label">本月支出</div><div class="stat-value" id="monthExpense">—</div></div>
+      <div class="stat-box"><div class="stat-label">本月淨額</div><div class="stat-value" id="monthNet">—</div></div>
+      <div class="stat-box"><div class="stat-label">記錄筆數</div><div class="stat-value" id="recordCount">—</div></div>
+    </div>
+
+    <div class="lunch-settle-box">
+      <div class="settle-header">
+        <h3>🍱 便當結算查詢</h3>
+        <div class="settle-date-pick">
+          <input type="date" id="settleDate" onchange="renderLunchSettle()">
+          <button class="btn btn-outline btn-small" onclick="setSettleDateToday()">今天</button>
+        </div>
+      </div>
+      <div class="settle-content" id="settleContent">
+        <p class="empty-state" style="padding:20px;">選擇日期查看當天便當結算</p>
+      </div>
+    </div>
+
+    <div class="records-filter">
+      <input type="text" id="filterKeyword" placeholder="搜尋項目或事由" oninput="renderRecords()">
+      <div class="date-filter-group">
+        <input type="date" id="filterDate" onchange="renderRecords()" title="只看某一天的紀錄">
+        <button class="date-clear-btn" id="filterDateClear" onclick="clearDateFilter()" disabled>清除日期</button>
+      </div>
+      <select id="filterType" onchange="renderRecords()">
+        <option value="">所有類型</option>
+        <option value="income">收入</option>
+        <option value="expense">支出</option>
+      </select>
+    </div>
+
+    <div class="delete-bar" id="deleteBar">
+      <span class="selection-info">
+        已勾選 <strong id="selectedCount">0</strong> 筆
+        <span style="margin-left:8px; font-style:italic; color:var(--ink-faded);">(勾選紀錄後可刪除)</span>
+      </span>
+      <div class="actions">
+        <button class="btn btn-outline btn-small" onclick="clearSelection()" id="clearSelectBtn" disabled>取消勾選</button>
+        <button class="btn btn-danger btn-small" onclick="openDeleteConfirm()" id="deleteBtn" disabled>刪除選取項目</button>
+      </div>
+    </div>
+
+    <div class="records-wrap">
+      <table class="record-table">
+        <thead>
+          <tr>
+            <th class="check-col"><input type="checkbox" id="selectAllCheck" onchange="toggleSelectAll(this.checked)"></th>
+            <th>日期</th>
+            <th>項目</th>
+            <th>收入</th>
+            <th>支出</th>
+            <th>經手人</th>
+          </tr>
+        </thead>
+        <tbody id="recordsBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="deleteModal">
+  <div class="modal">
+    <h2 style="color:var(--red);">⚠ 確認刪除</h2>
+    <p style="font-size:14px; color:var(--ink-soft); margin-bottom:12px; line-height:1.7;">
+      以下 <strong id="deleteCountText" style="color:var(--red);">0</strong> 筆記錄將從試算表中刪除,<strong>此動作無法復原</strong>。
+    </p>
+    <ul class="delete-preview-list" id="deletePreviewList"></ul>
+    <p style="font-size:12px; color:var(--ink-faded); font-style:italic; margin-top:8px;">
+      💡 系統會比對日期、項目、金額、經手人完全一致的紀錄,確保刪除正確的那一筆。
+    </p>
+    <div class="modal-actions">
+      <button class="btn btn-outline btn-small" onclick="closeDeleteConfirm()">取消</button>
+      <button class="btn btn-danger btn-small" onclick="confirmDelete()" id="confirmDeleteBtn">確認刪除</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  const PEOPLE = ['妍儒','佳宜','維妮','淑莉','美菲','志益','育齊','拍拍','志偉','其他'];
+  const BENTO_PEOPLE = ['淑莉','美菲','佳宜','妍儒','志益','育齊','拍拍','志偉','維妮','其他1','其他2','其他3'];
+  const BENTO_STORES = [
+    {
+      store: '合豐便當',
+      items: [
+        { name: '雞排', price: 100 }, { name: '排骨', price: 100 }, { name: '燒肉', price: 100 },
+        { name: '香腸飯', price: 100 }, { name: '烤雞腿', price: 120 },
+        { name: '炸雞腿', price: 120 }, { name: '鯖魚排', price: 120 }
+      ]
+    },
+    {
+      store: '姐姐',
+      photo: 'jiejie.jpg',
+      items: [
+        { name: '滷肉飯', variant: true, priceLabel: '$45/55' },
+        { name: '焢肉飯', price: 90 }, { name: '鴨肉飯', price: 100 },
+        { name: '雞腿排飯', price: 100 }, { name: '香酥豬排飯', price: 100 },
+        { name: '麵', variant: true, priceLabel: '$55/65' },
+        { name: '粄條', variant: true, priceLabel: '$55/65' },
+        { name: '鴨肉麵', variant: true, priceLabel: '$75/85' },
+        { name: '鴨肉粄條', variant: true, priceLabel: '$75/85' },
+        { name: '鴨肉冬粉', variant: true, priceLabel: '$75/85' },
+        { name: '沙茶鴨肉麵', variant: true, priceLabel: '$90' },
+        { name: '香酥豬排麵', variant: true, priceLabel: '$100' },
+        { name: '貢丸湯', price: 40 }, { name: '魚丸湯', price: 40 },
+        { name: '鴨肉湯', price: 60 }, { name: '肝連湯', price: 60 }, { name: '粉腸湯', price: 60 },
+        { name: '滷蛋', price: 15 }, { name: '豆干', price: 15 },
+        { name: '海帶', price: 15 }, { name: '燙青菜', price: 50 },
+        { name: '肝連', price: 70 }, { name: '粉腸', price: 70 },
+        { name: '豬排(一份)', price: 70 }, { name: '鴨肉(一份)', price: 90 }
+      ]
+    },
+    {
+      store: '午餐補助',
+      items: [
+        { name: '午餐補助', price: 100 }
+      ]
+    }
+  ];
+  const BENTO_VARIANTS = {
+    '滷肉飯': { sizePrice: { '小': 45, '大': 55 } },
+    '麵': { sizePrice: { '小': 55, '大': 65 }, needsType: true },
+    '粄條': { sizePrice: { '小': 55, '大': 65 }, needsType: true },
+    '鴨肉麵': { sizePrice: { '小': 75, '大': 85 } },
+    '鴨肉粄條': { sizePrice: { '小': 75, '大': 85 } },
+    '鴨肉冬粉': { sizePrice: { '小': 75, '大': 85 } },
+    '沙茶鴨肉麵': { price: 90, needsType: true },
+    '香酥豬排麵': { price: 100, needsType: true }
+  };
+  function composeVariantLabel(base, size, type) {
+    const parts = [];
+    if (size) parts.push(size);
+    if (type) parts.push(type);
+    return parts.length ? `${base}(${parts.join('/')})` : base;
+  }
+  function isVariantComplete(sel) {
+    const cfg = BENTO_VARIANTS[sel.item];
+    if (!cfg) return true;
+    return (!cfg.sizePrice || sel.size) && (!cfg.needsType || sel.type);
+  }
+  function recomputeVariantPrice(sel) {
+    const cfg = BENTO_VARIANTS[sel.item];
+    if (!cfg) return;
+    sel.price = isVariantComplete(sel) ? (cfg.sizePrice ? cfg.sizePrice[sel.size] : cfg.price) : 0;
+  }
+  function displayLabel(sel) {
+    const cfg = BENTO_VARIANTS[sel.item];
+    if (!cfg) return sel.item;
+    return composeVariantLabel(sel.item, sel.size, sel.type);
+  }
+  const BENTO_VARIANT_MENU = [];
+  Object.entries(BENTO_VARIANTS).forEach(([base, cfg]) => {
+    const sizes = cfg.sizePrice ? Object.keys(cfg.sizePrice) : [null];
+    const types = cfg.needsType ? ['乾', '湯'] : [null];
+    sizes.forEach(size => {
+      types.forEach(type => {
+        const price = cfg.sizePrice ? cfg.sizePrice[size] : cfg.price;
+        BENTO_VARIANT_MENU.push({ name: composeVariantLabel(base, size, type), price });
+      });
+    });
+  });
+  const BENTO_MENU = BENTO_STORES.flatMap(s => s.items.filter(i => !i.variant)).concat(BENTO_VARIANT_MENU);
+  const PRODUCTS = [
+    { name: '巨貓', price: 1880 }, { name: '大貓', price: 590 }, { name: '中貓', price: 390 },
+    { name: '小貓', price: 200 }, { name: '星座貓', price: 470 }, { name: '雙手貓三入組', price: 1180 }, { name: '馬貓', price: 690 },
+    { name: '媽祖', price: 390 }, { name: '永生花貓', price: 1080 }, { name: '8公分龍', price: 690 },
+    { name: '6公分龍', price: 490 }, { name: '大消波塊', price: 980 }, { name: '中消波塊', price: 590 },
+    { name: '小消波塊', price: 200 }, { name: '植物盆', price: 1280 }, { name: '小守宮', price: 200 },
+    { name: '大守宮', price: 690 }, { name: '狗', price: 490 }, { name: '中瘦貓', price: 490 },
+    { name: '虎', price: 490 }, { name: '大貓頭鷹', price: 490 }, { name: '小貓頭鷹', price: 200 }, { name: '名片座', price: 390 },
+    { name: '大摩艾', price:520 }, { name: '小摩艾', price: 120 }, { name: '木片', price: 100 },{ name: '繽紛好運精油禮盒', price: 590 } , 
+    { name: '茶&橙&檸精油', price: 499 }, { name: '薰&佛&玫精油', price: 399 }, { name: '精油加購價', price: 250 }, { name: '雷雕', price: 150 }, { name: '運費', price: 80 }
+  ];
+
+  const POLL_INTERVAL_MS = 15000;
+
+  const API_URL = '/api';
+  let allRecords = [];
+  let bentoSelections = {};
+  let confirmedBento = {};
+  let cart = [];
+  let pollInterval = null;
+  let selectedRows = new Set();
+
+  // ============ 送出鎖:每個按鈕一個 key,避免雙擊送出兩筆 ============
+  const submittingFlags = {};   // key: true 代表正在送出中
+  function lockSubmit(key) {
+    if (submittingFlags[key]) return false;  // 已被鎖,擋下
+    submittingFlags[key] = true;
+    return true;
+  }
+  function unlockSubmit(key) {
+    delete submittingFlags[key];
+  }
+
+  // 包一個共用的送出流程:鎖按鈕 + 改文字 + 解鎖
+  async function runSubmit(key, btnId, busyText, fn) {
+    if (!lockSubmit(key)) return;        // 重複點擊直接擋掉
+    const btn = btnId ? document.getElementById(btnId) : null;
+    let originalText = '';
+    if (btn) {
+      originalText = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = busyText || '處理中…';
+    }
+    try {
+      await fn();
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = originalText;
+      }
+      unlockSubmit(key);
+    }
+  }
+
+  const $ = id => document.getElementById(id);
+  const fmt = n => 'NT$ ' + Number(n||0).toLocaleString();
+  const today = () => new Date().toISOString().slice(0,10);
+
+  function toast(msg, type='') {
+    const t = $('toast');
+    t.textContent = msg;
+    t.className = 'toast show ' + type;
+    setTimeout(() => t.className = 'toast ' + type, 2400);
+  }
+
+  function updateSyncStatus(state) {
+    const el = $('syncStatus');
+    const text = $('syncText');
+    if (state === 'connected') {
+      el.classList.add('connected');
+      text.textContent = '已連線 · 即時同步';
+    } else if (state === 'loading') {
+      el.classList.remove('connected');
+      text.textContent = '載入中…';
+    } else {
+      el.classList.remove('connected');
+      text.textContent = '未連線';
+    }
+  }
+
+  async function api(action, payload = {}) {
+    const maxRetries = 2;
+    for (let attempt = 0; ; attempt++) {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
+      try {
+        const res = await fetch(API_URL, {
+          method: 'POST',
+          body: JSON.stringify({ action, payload }),
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          signal: controller.signal
+        });
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const data = await res.json();
+        if (!data.ok) {
+          const err = new Error(data.error || '未知錯誤');
+          err.noRetry = true;
+          throw err;
+        }
+        return data.data;
+      } catch (e) {
+        if (e.noRetry || attempt >= maxRetries) throw e;
+        await new Promise(r => setTimeout(r, 800 * (attempt + 1)));
+      } finally {
+        clearTimeout(timeoutId);
+      }
+    }
+  }
+
+  function parseBentoFromRecord(r) {
+    if (r.type !== '支出') return null;
+    const item = String(r.item || '');
+
+    const bentoMatch = item.match(/^(.+?)\s*[—–-]\s*(.+?)\s*[—–-]\s*便當\s*$/);
+    if (bentoMatch) {
+      const person = bentoMatch[1].trim();
+      let bento = bentoMatch[2].trim();
+      let lessRice = false;
+      const lr = bento.match(/^(.*?)\s*[((]\s*少飯\s*[))]\s*$/);
+      if (lr) { bento = lr[1].trim(); lessRice = true; }
+      return {
+        date: r.date, person, bento,
+        lessRice: lessRice ? '少飯' : '',
+        price: Number(r.expense || 0),
+        type: '便當', handler: r.handler || ''
+      };
+    }
+
+    if (item.indexOf('午餐補助') !== -1) {
+      const subMatch = item.match(/^(.+?)\s*[—–-]\s*午餐補助/);
+      const person = subMatch ? subMatch[1].trim() : '';
+      return {
+        date: r.date, person, bento: '午餐補助', lessRice: '',
+        price: Number(r.expense || 0),
+        type: '補貼', handler: r.handler || ''
+      };
+    }
+
+    return null;
+  }
+
+  function getLunchByDate(dateStr) {
+    if (!dateStr) return [];
+    const out = [];
+    for (const r of allRecords) {
+      if (r.date !== dateStr) continue;
+      const parsed = parseBentoFromRecord(r);
+      if (parsed) out.push(parsed);
+    }
+    return out;
+  }
+
+  function syncConfirmedFromRecords() {
+    const date = $('bentoDate').value || today();
+    confirmedBento = {};
+    getLunchByDate(date).forEach(r => {
+      const menu = BENTO_MENU.find(m => m.name === r.bento);
+      if (menu && r.person) {
+        if (!confirmedBento[r.person]) confirmedBento[r.person] = [];
+        confirmedBento[r.person].push({
+          item: r.bento,
+          price: menu.price,
+          lessRice: r.lessRice === '少飯'
+        });
+      }
+    });
+  }
+
+  async function refreshAll() {
+    try {
+      updateSyncStatus('loading');
+      const res = await api('getAll');
+      allRecords = res.records || [];
+      updateSyncStatus('connected');
+      $('sharedBanner').classList.remove('offline');
+      $('sharedBannerText').textContent = `即時共用模式 · 每 ${POLL_INTERVAL_MS/1000} 秒自動同步其他同事的選擇`;
+
+      selectedRows.clear();
+
+      syncConfirmedFromRecords();
+      renderBentoGrid();
+      renderRecords();
+      updateTotals();
+      renderLunchSettle();
+    } catch (e) {
+      console.error(e);
+      updateSyncStatus('error');
+      $('sharedBanner').classList.add('offline');
+      $('sharedBannerText').textContent = '⚠ 無法連線到資料庫 — ' + e.message;
+      renderBentoGrid();
+    }
+  }
+
+  function onBentoDateChange() {
+    syncConfirmedFromRecords();
+    renderBentoGrid();
+  }
+
+  document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+      tab.classList.add('active');
+      $('panel-' + tab.dataset.panel).classList.add('active');
+    });
+  });
+
+  function fillPeopleSelect(el) {
+    el.innerHTML = '';
+    PEOPLE.forEach(p => {
+      const opt = document.createElement('option');
+      opt.value = p; opt.textContent = p;
+      el.appendChild(opt);
+    });
+  }
+
+  function bindHandlerOther(selectId, otherId) {
+    $(selectId).addEventListener('change', (e) => {
+      $(otherId).style.display = e.target.value === '其他' ? 'block' : 'none';
+    });
+  }
+
+  function getHandler(selectId, otherId) {
+    const v = $(selectId).value;
+    if (v === '其他') {
+      const other = $(otherId).value.trim();
+      return other ? '其他-' + other : '其他';
+    }
+    return v;
+  }
+
+  function isHefengItem(itemName) {
+    const store = BENTO_STORES.find(s => s.store === '合豐便當');
+    return !!store && store.items.some(i => i.name === itemName);
+  }
+
+  function renderBentoGrid() {
+    const grid = $('bentoGrid');
+    grid.innerHTML = '';
+    const options = '<option value="">+ 新增品項</option>' +
+      BENTO_STORES.map(store => '<optgroup label="' + store.store + '">' +
+        store.items.map(b =>
+          `<option value="${b.name}">${b.name} · ${b.variant ? b.priceLabel : '$' + b.price}</option>`
+        ).join('') +
+      '</optgroup>').join('');
+
+    BENTO_PEOPLE.forEach(person => {
+      const card = document.createElement('div');
+      card.className = 'bento-card';
+      card.id = 'bento-' + person;
+      const confirmedItems = confirmedBento[person] || [];
+      const pendingItems = bentoSelections[person] || [];
+      const allItems = [...confirmedItems, ...pendingItems];
+      const total = allItems.reduce((s, i) => s + i.price, 0);
+
+      const rowsHtml = confirmedItems.map(it => `
+        <li class="item-row-group">
+          <div class="item-row">
+            <span class="item-name">${it.item}${it.lessRice ? '<span class="meta">(少飯)</span>' : ''}</span>
+            <span class="item-price">$${it.price}</span>
+            <span class="item-tag">✓已上傳</span>
+          </div>
+        </li>
+      `).join('') + pendingItems.map((it, idx) => {
+        const cfg = BENTO_VARIANTS[it.item];
+        const complete = isVariantComplete(it);
+        const label = displayLabel(it);
+        return `
+        <li class="item-row-group">
+          <div class="item-row">
+            <span class="item-name">${label}${it.lessRice ? '<span class="meta">(少飯)</span>' : ''}</span>
+            <span class="item-price pending">${complete ? '$' + it.price : '未選規格'}</span>
+            ${isHefengItem(it.item) ? `
+            <label class="less-rice-inline">
+              <input type="checkbox" ${it.lessRice ? 'checked' : ''} onchange="toggleLessRiceItem('${person}', ${idx}, this.checked)">少飯
+            </label>` : ''}
+            <button class="remove-item-btn" onclick="removeBentoItem('${person}', ${idx})" title="移除">×</button>
+          </div>
+          ${cfg && cfg.sizePrice ? `
+          <div class="variant-picker">
+            <span class="variant-label">大小*</span>
+            <label><input type="checkbox" ${it.size==='小'?'checked':''} onchange="setVariantSize('${person}',${idx},'小',this.checked)">小</label>
+            <label><input type="checkbox" ${it.size==='大'?'checked':''} onchange="setVariantSize('${person}',${idx},'大',this.checked)">大</label>
+          </div>` : ''}
+          ${cfg && cfg.needsType ? `
+          <div class="variant-picker">
+            <span class="variant-label">乾湯*</span>
+            <label><input type="checkbox" ${it.type==='乾'?'checked':''} onchange="setVariantType('${person}',${idx},'乾',this.checked)">乾</label>
+            <label><input type="checkbox" ${it.type==='湯'?'checked':''} onchange="setVariantType('${person}',${idx},'湯',this.checked)">湯</label>
+          </div>` : ''}
+        </li>
+      `;
+      }).join('');
+
+      card.innerHTML = `
+        <div class="name">
+          <span>${person}</span>
+          <span class="price-tag" id="price-${person}">${allItems.length ? '$' + total : '—'}</span>
+        </div>
+        ${allItems.length ? `<ul class="item-list">${rowsHtml}</ul>` : ''}
+        <select onchange="addBentoItem('${person}', this.value); this.value='';">${options}</select>
+        ${confirmedItems.length ? `<button class="cancel-bento-btn" onclick="cancelBento('${person}')">取消今日已上傳</button>` : ''}
+      `;
+      if (confirmedItems.length && !pendingItems.length) card.classList.add('confirmed');
+      else if (pendingItems.length) card.classList.add('has-selection');
+
+      grid.appendChild(card);
+    });
+    renderOrderSummary();
+  }
+
+  window.addBentoItem = (person, itemName) => {
+    if (!itemName) return;
+    if (!bentoSelections[person]) bentoSelections[person] = [];
+    if (BENTO_VARIANTS[itemName]) {
+      bentoSelections[person].push({ item: itemName, size: null, type: null, price: 0, lessRice: false });
+    } else {
+      const menu = BENTO_MENU.find(b => b.name === itemName);
+      if (!menu) return;
+      bentoSelections[person].push({ item: itemName, price: menu.price, lessRice: false });
+    }
+    renderBentoGrid();
+  };
+
+  window.removeBentoItem = (person, idx) => {
+    if (!bentoSelections[person]) return;
+    bentoSelections[person].splice(idx, 1);
+    if (!bentoSelections[person].length) delete bentoSelections[person];
+    renderBentoGrid();
+  };
+
+  window.setVariantSize = (person, idx, size, checked) => {
+    const sel = bentoSelections[person] && bentoSelections[person][idx];
+    if (!sel) return;
+    sel.size = checked ? size : null;
+    recomputeVariantPrice(sel);
+    renderBentoGrid();
+  };
+
+  window.setVariantType = (person, idx, type, checked) => {
+    const sel = bentoSelections[person] && bentoSelections[person][idx];
+    if (!sel) return;
+    sel.type = checked ? type : null;
+    recomputeVariantPrice(sel);
+    renderBentoGrid();
+  };
+
+  window.toggleLessRiceItem = (person, idx, val) => {
+    if (!bentoSelections[person] || !bentoSelections[person][idx]) return;
+    bentoSelections[person][idx].lessRice = val;
+    renderBentoGrid();
+  };
+
+window.cancelBento = async (person) => {
+    const date = $('bentoDate').value || today();
+    const targets = allRecords.filter(r => {
+      if (r.date !== date) return false;
+      const parsed = parseBentoFromRecord(r);
+      return parsed && parsed.person === person;
+    });
+    if (!targets.length) return toast('找不到對應的已上傳記錄', 'error');
+    if (!confirm(`確定取消「${person}」這筆已上傳的訂餐並重新選擇?\n(會從試算表刪除該筆)`)) return;
+
+    if (!lockSubmit('cancel-' + person)) return;
+    try {
+      await api('deleteRecords', {
+        targets: targets.map(r => ({
+          row: r.row, date: r.date, item: r.item, type: r.type,
+          income: r.income === '' || r.income == null ? '' : Number(r.income),
+          expense: r.expense === '' || r.expense == null ? '' : Number(r.expense),
+          handler: r.handler
+        }))
+      });
+      toast(`已取消 ${person} 的訂餐,可重新選擇`, 'success');
+      delete confirmedBento[person];
+      delete bentoSelections[person];
+      renderBentoGrid();
+      setTimeout(refreshAll, 1200);
+    } catch (e) {
+      toast('取消失敗:' + e.message, 'error');
+    } finally {
+      unlockSubmit('cancel-' + person);
+    }
+  };
+  function renderOrderSummary() {
+    const list = $('orderList');
+    const entries = [];
+    BENTO_PEOPLE.forEach(person => {
+      (confirmedBento[person] || []).forEach(sel => entries.push({ person, sel, confirmed: true }));
+      (bentoSelections[person] || []).forEach(sel => entries.push({ person, sel, confirmed: false }));
+    });
+    if (!entries.length) {
+      $('orderSummary').style.display = 'none';
+      $('bentoCountHint').textContent = '尚未選擇';
+      $('submitBentoBtn').disabled = true;
+      $('submitBentoBtn').textContent = '尚無待上傳項目';
+      return;
+    }
+    $('orderSummary').style.display = 'block';
+    list.innerHTML = '';
+    let bentoSum = 0, subsidySum = 0, pendingCount = 0;
+    entries.forEach(({ person, sel, confirmed }) => {
+      const label = displayLabel(sel);
+      const complete = isVariantComplete(sel);
+      const isSubsidy = label === '午餐補助';
+      if (complete) {
+        if (isSubsidy) subsidySum += sel.price;
+        else bentoSum += sel.price;
+      }
+
+      if (!confirmed) pendingCount++;
+      const li = document.createElement('li');
+      if (confirmed) li.className = 'confirmed-row';
+      li.innerHTML = `
+        <span>${person} — ${label}${sel.lessRice?'<span class="meta">(少飯)</span>':''}${confirmed?'<span class="meta">· 已上傳</span>':''}${!complete?'<span class="meta" style="color:var(--accent);">(尚未選規格)</span>':''}</span>
+        <span class="amount">${complete ? '- $' + sel.price : '—'}</span>
+      `;
+      list.appendChild(li);
+    });
+    const totalSum = bentoSum + subsidySum;
+    $('settleBento').textContent = '$' + bentoSum.toLocaleString();
+    $('settleSubsidy').textContent = '$' + subsidySum.toLocaleString();
+    $('settleTotal').textContent = '$' + totalSum.toLocaleString();
+    const peopleCount = new Set(entries.map(e => e.person)).size;
+    $('bentoCountHint').textContent =
+      `已選 ${peopleCount} 人 · ${entries.length} 項 · 待上傳 ${pendingCount} · 合計 ${fmt(totalSum)}`;
+    // 注意:這裡只在「沒被送出鎖定」的時候才覆寫按鈕文字
+    if (!submittingFlags['bento']) {
+      $('submitBentoBtn').textContent = pendingCount > 0
+        ? `上傳 ${pendingCount} 筆未上傳的選擇`
+        : '所有選擇都已上傳 ✓';
+      $('submitBentoBtn').disabled = pendingCount === 0;
+    }
+  }
+
+  async function submitBento() {
+    const entries = [];
+    BENTO_PEOPLE.forEach(person => {
+      (bentoSelections[person] || []).forEach(sel => entries.push({ person, sel }));
+    });
+    if (!entries.length) return toast('沒有待上傳的選擇', 'error');
+    const incomplete = entries.find(({ sel }) => !isVariantComplete(sel));
+    if (incomplete) return toast(`${incomplete.person} 的「${incomplete.sel.item}」還沒選規格(大小/乾湯),請完成後再上傳`, 'error');
+    const handler = getHandler('bentoHandler', 'bentoHandlerOther');
+    if (!handler) return toast('請選擇經手人', 'error');
+
+    // 用送出鎖,避免雙擊
+    if (!lockSubmit('bento')) return;
+    const btn = $('submitBentoBtn');
+    const originalText = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = '上傳中…';
+
+    const date = $('bentoDate').value || today();
+    const ledger = [];
+    let bentoSum = 0, subsidySum = 0;
+
+    entries.forEach(({ person, sel }) => {
+      const label = displayLabel(sel);
+      const isSubsidy = label === '午餐補助';
+      if (isSubsidy) {
+        ledger.push({
+          date,
+          item: `${person} — 午餐補助`,
+          type: '支出',
+          income: '',
+          expense: sel.price,
+          handler
+        });
+        subsidySum += sel.price;
+      } else {
+        const itemLabel = sel.lessRice
+          ? `${person} — ${label}(少飯) — 便當`
+          : `${person} — ${label} — 便當`;
+        ledger.push({
+          date,
+          item: itemLabel,
+          type: '支出',
+          income: '',
+          expense: sel.price,
+          handler
+        });
+        bentoSum += sel.price;
+      }
+    });
+
+    try {
+      await api('submitLunch', { ledger });
+      toast(`已上傳 ${entries.length} 筆訂餐 · 便當款 $${bentoSum} + 補貼款 $${subsidySum}`, 'success');
+      bentoSelections = {};
+      setTimeout(refreshAll, 1200);
+    } catch (e) {
+      toast('上傳失敗:' + e.message, 'error');
+      btn.disabled = false;
+      btn.textContent = originalText;
+    } finally {
+      unlockSubmit('bento');
+      // 注意:成功時不還原按鈕(因為 refreshAll 會重新算 disabled/文字)
+    }
+  }
+
+  $('pkgCompany').addEventListener('change', e => {
+    $('pkgCompanyOther').style.display = e.target.value === '其他' ? 'block' : 'none';
+  });
+
+  function submitPackage() {
+    runSubmit('package', 'submitPackageBtn', '上傳中…', async () => {
+      const amount = Number($('pkgAmount').value || 0);
+      if (amount <= 0) return toast('請輸入代收款項', 'error');
+      let company = $('pkgCompany').value;
+      if (company === '其他') {
+        const o = $('pkgCompanyOther').value.trim();
+        if (!o) return toast('請輸入物流公司名稱', 'error');
+        company = '其他-' + o;
+      }
+      const handler = getHandler('pkgHandler', 'pkgHandlerOther');
+      const date = $('pkgDate').value || today();
+      try {
+        await api('append', {
+          record: { date, item: `包裹【${company}】代收`, type: '支出', income: '', expense: amount, handler }
+        });
+        toast('已登記包裹支出', 'success');
+        $('pkgAmount').value = '';
+        $('pkgCompanyOther').value = '';
+        setTimeout(refreshAll, 1200);
+      } catch (e) { toast('登記失敗:' + e.message, 'error'); }
+    });
+  }
+
+  function renderProductGrid() {
+    const grid = $('productGrid');
+    grid.innerHTML = '';
+    PRODUCTS.forEach(p => {
+      const card = document.createElement('div');
+      card.className = 'product-card';
+      const cartItem = cart.find(c => c.name === p.name);
+      card.innerHTML = `
+        <div class="p-name">${p.name}</div>
+        <div class="p-price">$${p.price}</div>
+        ${cartItem ? `<div class="p-qty">${cartItem.qty}</div>` : ''}
+      `;
+      card.onclick = () => addToCart(p.name, p.price);
+      grid.appendChild(card);
+    });
+  }
+
+  function addToCart(name, price) {
+    const existing = cart.find(c => c.name === name);
+    if (existing) existing.qty++;
+    else cart.push({ name, price, qty: 1 });
+    renderProductGrid();
+    renderCart();
+  }
+
+  function addOtherProduct() {
+    const name = $('otherProductName').value.trim();
+    const price = Number($('otherProductPrice').value || 0);
+    if (!name || price <= 0) return toast('請輸入商品名稱和金額', 'error');
+    addToCart(name, price);
+    $('otherProductName').value = '';
+    $('otherProductPrice').value = '';
+  }
+
+  window.cartAdjust = (name, delta) => {
+    const it = cart.find(c => c.name === name);
+    if (!it) return;
+    it.qty += delta;
+    if (it.qty <= 0) cart = cart.filter(c => c.name !== name);
+    renderProductGrid();
+    renderCart();
+  };
+
+  function renderCart() {
+    const box = $('cartBox');
+    if (!cart.length) { box.style.display = 'none'; return; }
+    box.style.display = 'block';
+    const list = $('cartList');
+    list.innerHTML = '';
+    cart.forEach(it => {
+      const li = document.createElement('li');
+      li.innerHTML = `
+        <span>${it.name} <span style="color:var(--ink-faded); font-size:12px;">$${it.price}</span></span>
+        <button class="cart-qty-btn" onclick="cartAdjust('${it.name}', -1)">−</button>
+        <span style="font-family:'JetBrains Mono',monospace; min-width:28px; text-align:center;">${it.qty}</span>
+        <button class="cart-qty-btn" onclick="cartAdjust('${it.name}', 1)">+</button>
+        <span class="subtotal">$${it.price * it.qty}</span>
+      `;
+      list.appendChild(li);
+    });
+    updateCartTotal();
+  }
+
+function calcCartTotal() {
+  const sub = cart.reduce((s, i) => s + i.price * i.qty, 0);
+  const type = $('discountType').value;
+  const val = Number($('discountValue').value || 0);
+  let total = sub;
+  if (type === 'employee') total = Math.round(sub * 0.7);
+  else if (type === 'percent' && val > 0 && val <= 10) total = Math.round(sub * val / 10);
+  else if (type === 'amount' && val > 0) total = Math.max(0, sub - val);
+  return { sub, total };
+}
+
+  function updateCartTotal() {
+    const { total } = calcCartTotal();
+    $('cartTotal').textContent = fmt(total);
+    calculateChange();
+  }
+
+  function calculateChange() {
+    const { total } = calcCartTotal();
+    const received = Number($('cashReceived').value || 0);
+    const changeEl = $('cashChange');
+    if (received === 0) {
+      changeEl.textContent = 'NT$ 0';
+      changeEl.style.color = 'var(--accent)';
+      return;
+    }
+    const change = received - total;
+    if (change < 0) {
+      changeEl.textContent = '金額不足';
+      changeEl.style.color = 'var(--red)';
+    } else {
+      changeEl.textContent = 'NT$ ' + change.toLocaleString();
+      changeEl.style.color = 'var(--live)';
+    }
+  }
+
+  $('discountType').addEventListener('change', updateCartTotal);
+  $('discountValue').addEventListener('input', updateCartTotal);
+
+  function submitSales() {
+    runSubmit('sales', 'submitSalesBtn', '上傳中…', async () => {
+      if (!cart.length) return toast('購物車為空', 'error');
+      const handler = getHandler('salesHandler', 'salesHandlerOther');
+      const date = $('salesDate').value || today();
+      const { total } = calcCartTotal();
+      const items = cart.map(c => `${c.name}x${c.qty}`).join('、');
+      let desc = `銷售【${items}】`;
+      const type = $('discountType').value;
+      const val = Number($('discountValue').value || 0);
+      if (type === 'employee') desc += ` (員工價·七折)`;
+      else if (type === 'percent' && val) desc += ` (${val}折)`;
+      else if (type === 'amount' && val) desc += ` (折${val}元)`;
+      try {
+        await api('append', {
+          record: { date, item: desc, type: '收入', income: total, expense: '', handler }
+        });
+        toast(`已登記銷售 ${fmt(total)}`, 'success');
+        cart = [];
+        $('discountType').value = 'none';
+        $('discountValue').value = '';
+        $('cashReceived').value = '';
+        $('cashChange').textContent = 'NT$ 0';
+        renderProductGrid();
+        renderCart();
+        setTimeout(refreshAll, 1200);
+      } catch (e) { toast('登記失敗:' + e.message, 'error'); }
+    });
+  }
+
+  $('refillHandler').addEventListener('change', e => {
+    $('refillHandlerOther').style.display = e.target.value === '其他' ? 'block' : 'none';
+  });
+
+  function submitRefill() {
+    runSubmit('refill', 'submitRefillBtn', '上傳中…', async () => {
+      const amount = Number($('refillAmount').value || 0);
+      if (amount <= 0) return toast('請輸入金額', 'error');
+      let handler = $('refillHandler').value;
+      if (handler === '其他') {
+        const o = $('refillHandlerOther').value.trim();
+        if (!o) return toast('請輸入登記人姓名', 'error');
+        handler = '其他-' + o;
+      }
+      const date = $('refillDate').value || today();
+      try {
+        await api('append', {
+          record: { date, item: '零用金補充', type: '收入', income: amount, expense: '', handler }
+        });
+        toast('已登記零用金補充', 'success');
+        $('refillAmount').value = '';
+        setTimeout(refreshAll, 1200);
+      } catch (e) { toast('登記失敗:' + e.message, 'error'); }
+    });
+  }
+
+  function submitIncome() {
+    runSubmit('income', 'submitIncomeBtn', '上傳中…', async () => {
+      const amount = Number($('incomeAmount').value || 0);
+      const reason = $('incomeReason').value.trim();
+      if (amount <= 0) return toast('請輸入金額', 'error');
+      if (!reason) return toast('請填寫事由', 'error');
+      const handler = getHandler('incomeHandler', 'incomeHandlerOther');
+      const date = $('incomeDate').value || today();
+      try {
+        await api('append', {
+          record: { date, item: `其他收入【${reason}】`, type: '收入', income: amount, expense: '', handler }
+        });
+        toast('已登記其他收入', 'success');
+        $('incomeAmount').value = '';
+        $('incomeReason').value = '';
+        setTimeout(refreshAll, 1200);
+      } catch (e) { toast('登記失敗:' + e.message, 'error'); }
+    });
+  }
+
+  function submitExpense() {
+    runSubmit('expense', 'submitExpenseBtn', '上傳中…', async () => {
+      const amount = Number($('expenseAmount').value || 0);
+      const reason = $('expenseReason').value.trim();
+      if (amount <= 0) return toast('請輸入金額', 'error');
+      if (!reason) return toast('請填寫事由', 'error');
+      const handler = getHandler('expenseHandler', 'expenseHandlerOther');
+      const date = $('expenseDate').value || today();
+      try {
+        await api('append', {
+          record: { date, item: `其他支出【${reason}】`, type: '支出', income: '', expense: amount, handler }
+        });
+        toast('已登記其他支出', 'success');
+        $('expenseAmount').value = '';
+        $('expenseReason').value = '';
+        setTimeout(refreshAll, 1200);
+      } catch (e) { toast('登記失敗:' + e.message, 'error'); }
+    });
+  }
+
+  function setSettleDateToday() {
+    $('settleDate').value = today();
+    renderLunchSettle();
+  }
+
+  function renderLunchSettle() {
+    const container = $('settleContent');
+    const date = $('settleDate').value;
+    if (!date) {
+      container.innerHTML = '<p class="empty-state" style="padding:20px;">選擇日期查看當天便當結算</p>';
+      return;
+    }
+
+    const dayRecords = getLunchByDate(date);
+    const bentoItems = dayRecords.filter(r => r.type === '便當');
+    const subsidyItems = dayRecords.filter(r => r.type === '補貼');
+
+    if (!bentoItems.length && !subsidyItems.length) {
+      container.innerHTML = `<p class="empty-state" style="padding:20px;">${date} 沒有便當記錄</p>`;
+      return;
+    }
+
+    const bentoSum = bentoItems.reduce((s, i) => s + Number(i.price || 0), 0);
+    const subsidySum = subsidyItems.reduce((s, i) => s + Number(i.price || 0), 0);
+    const totalSum = bentoSum + subsidySum;
+
+    let listHtml = '';
+    bentoItems.forEach(i => {
+      listHtml += `<li>
+        <span>${i.person} — ${i.bento}${i.lessRice==='少飯'?'(少飯)':''}<span class="s-type bento">便當</span></span>
+        <span>$${Number(i.price).toLocaleString()}</span>
+      </li>`;
+    });
+    subsidyItems.forEach(i => {
+      listHtml += `<li>
+        <span>${i.person} — 午餐補助<span class="s-type subsidy">補貼</span></span>
+        <span>$${Number(i.price).toLocaleString()}</span>
+      </li>`;
+    });
+
+    container.innerHTML = `
+      <div class="settle-grid">
+        <div class="settle-item bento">
+          <span class="s-label">便當款 <span class="s-hint">${bentoItems.length}份 · 給便當店</span></span>
+          <span class="s-amount">$${bentoSum.toLocaleString()}</span>
+        </div>
+        <div class="settle-item subsidy">
+          <span class="s-label">補貼款 <span class="s-hint">${subsidyItems.length}人 · 發給員工</span></span>
+          <span class="s-amount">$${subsidySum.toLocaleString()}</span>
+        </div>
+        <div class="settle-item total">
+          <span class="s-label">總餐費 <span class="s-hint">零用金支出</span></span>
+          <span class="s-amount">$${totalSum.toLocaleString()}</span>
+        </div>
+      </div>
+      <ul class="settle-list">${listHtml}</ul>
+    `;
+  }
+
+  // ============ 記錄頁 ============
+  function escapeHtml(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  function clearDateFilter() {
+    $('filterDate').value = '';
+    renderRecords();
+  }
+
+  function renderRecords() {
+    const tbody = $('recordsBody');
+    const kw = $('filterKeyword').value.trim().toLowerCase();
+    const fd = $('filterDate').value;
+    const ft = $('filterType').value;
+
+    $('filterDateClear').disabled = !fd;
+
+    const filtered = allRecords.filter(r => {
+      if (kw && !(r.item || '').toLowerCase().includes(kw)) return false;
+      if (fd && r.date !== fd) return false;
+      if (ft === 'income' && !r.income) return false;
+      if (ft === 'expense' && !r.expense) return false;
+      return true;
+    }).sort((a, b) => {
+      const dateCompare = (b.date || '').localeCompare(a.date || '');
+      if (dateCompare !== 0) return dateCompare;
+      return (b.row || 0) - (a.row || 0);
+    });
+
+    if (!filtered.length) {
+      const emptyMsg = fd ? `${fd} 沒有符合的記錄` : '尚無記錄';
+      tbody.innerHTML = `<tr><td colspan="6" class="empty-state">${emptyMsg}</td></tr>`;
+    } else {
+      tbody.innerHTML = filtered.map(r => {
+        const checked = selectedRows.has(r.row);
+        return `
+          <tr class="${checked ? 'row-selected' : ''}">
+            <td class="check-col">
+              <input type="checkbox" data-row="${r.row}" ${checked ? 'checked' : ''} onchange="toggleRecordSelect(this)">
+            </td>
+            <td class="date-col">${escapeHtml(r.date || '')}</td>
+            <td>${escapeHtml(r.item || '')}</td>
+            <td class="amount-in">${r.income ? '+ ' + Number(r.income).toLocaleString() : ''}</td>
+            <td class="amount-out">${r.expense ? '- ' + Number(r.expense).toLocaleString() : ''}</td>
+            <td>${escapeHtml(r.handler || '')}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    updateDeleteBar();
+  }
+
+  window.toggleRecordSelect = (cb) => {
+    const row = Number(cb.getAttribute('data-row'));
+    if (cb.checked) selectedRows.add(row);
+    else selectedRows.delete(row);
+    cb.closest('tr').classList.toggle('row-selected', cb.checked);
+    updateDeleteBar();
+  };
+
+  function toggleSelectAll(checked) {
+    const checkboxes = document.querySelectorAll('#recordsBody input[type="checkbox"]');
+    checkboxes.forEach(cb => {
+      const row = Number(cb.getAttribute('data-row'));
+      cb.checked = checked;
+      cb.closest('tr').classList.toggle('row-selected', checked);
+      if (checked) selectedRows.add(row);
+      else selectedRows.delete(row);
+    });
+    updateDeleteBar();
+  }
+
+  function clearSelection() {
+    selectedRows.clear();
+    document.querySelectorAll('#recordsBody input[type="checkbox"]').forEach(cb => {
+      cb.checked = false;
+      cb.closest('tr').classList.remove('row-selected');
+    });
+    $('selectAllCheck').checked = false;
+    updateDeleteBar();
+  }
+
+  function updateDeleteBar() {
+    const count = selectedRows.size;
+    $('selectedCount').textContent = count;
+    $('deleteBtn').disabled = count === 0;
+    $('clearSelectBtn').disabled = count === 0;
+    $('deleteBar').classList.toggle('has-selection', count > 0);
+
+    const allCheckboxes = document.querySelectorAll('#recordsBody input[type="checkbox"]');
+    const checkedCount = document.querySelectorAll('#recordsBody input[type="checkbox"]:checked').length;
+    if (allCheckboxes.length > 0 && checkedCount === allCheckboxes.length) {
+      $('selectAllCheck').checked = true;
+    } else {
+      $('selectAllCheck').checked = false;
+    }
+  }
+
+  function openDeleteConfirm() {
+    if (!selectedRows.size) return;
+    const targets = allRecords.filter(r => selectedRows.has(r.row));
+    if (!targets.length) return toast('找不到對應記錄', 'error');
+
+    $('deleteCountText').textContent = targets.length;
+    const list = $('deletePreviewList');
+    list.innerHTML = targets.map(r => {
+      const amount = r.income
+        ? `<span class="d-amount income">+ ${Number(r.income).toLocaleString()}</span>`
+        : `<span class="d-amount expense">- ${Number(r.expense || 0).toLocaleString()}</span>`;
+      return `
+        <li>
+          <span>
+            <span class="d-date">${escapeHtml(r.date || '')}</span>
+            ${escapeHtml(r.item || '')}
+            <span style="color:var(--ink-faded); font-size:12px;">· ${escapeHtml(r.handler || '')}</span>
+          </span>
+          ${amount}
+        </li>
+      `;
+    }).join('');
+    $('deleteModal').classList.add('show');
+  }
+
+  function closeDeleteConfirm() {
+    $('deleteModal').classList.remove('show');
+  }
+
+  async function confirmDelete() {
+    const targets = allRecords.filter(r => selectedRows.has(r.row));
+    if (!targets.length) {
+      closeDeleteConfirm();
+      return;
+    }
+
+    // 用送出鎖,避免雙擊
+    if (!lockSubmit('delete')) return;
+    const btn = $('confirmDeleteBtn');
+    btn.disabled = true;
+    btn.textContent = '刪除中…';
+
+    try {
+      await api('deleteRecords', {
+        targets: targets.map(r => ({
+          row: r.row,
+          date: r.date,
+          item: r.item,
+          type: r.type,
+          income: r.income === '' || r.income == null ? '' : Number(r.income),
+          expense: r.expense === '' || r.expense == null ? '' : Number(r.expense),
+          handler: r.handler
+        }))
+      });
+      toast(`已刪除 ${targets.length} 筆記錄`, 'success');
+      selectedRows.clear();
+      closeDeleteConfirm();
+      setTimeout(refreshAll, 1200);
+    } catch (e) {
+      toast('刪除失敗:' + e.message, 'error');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '確認刪除';
+      unlockSubmit('delete');
+    }
+  }
+
+  function updateTotals() {
+    let inc = 0, exp = 0, mInc = 0, mExp = 0;
+    const ym = today().slice(0,7);
+    allRecords.forEach(r => {
+      inc += Number(r.income || 0);
+      exp += Number(r.expense || 0);
+      if ((r.date || '').startsWith(ym)) {
+        mInc += Number(r.income || 0);
+        mExp += Number(r.expense || 0);
+      }
+    });
+    $('totalIncome').textContent = fmt(inc);
+    $('totalExpense').textContent = fmt(exp);
+    $('totalBalance').textContent = fmt(inc - exp);
+    $('monthIncome').textContent = fmt(mInc);
+    $('monthExpense').textContent = fmt(mExp);
+    $('monthNet').textContent = fmt(mInc - mExp);
+    $('recordCount').textContent = allRecords.length;
+  }
+
+  function startPolling() {
+    if (pollInterval) clearInterval(pollInterval);
+    pollInterval = setInterval(() => {
+      const active = document.activeElement;
+      const isBrowsingSelect = active && active.tagName === 'SELECT' && $('bentoGrid').contains(active);
+      if ($('panel-bento').classList.contains('active') && !document.hidden && !isBrowsingSelect) {
+        refreshAll();
+      }
+    }, POLL_INTERVAL_MS);
+  }
+
+  async function init() {
+    ['bentoHandler','pkgHandler','salesHandler','incomeHandler','expenseHandler'].forEach(id => {
+      fillPeopleSelect($(id));
+    });
+    bindHandlerOther('bentoHandler','bentoHandlerOther');
+    bindHandlerOther('pkgHandler','pkgHandlerOther');
+    bindHandlerOther('salesHandler','salesHandlerOther');
+    bindHandlerOther('incomeHandler','incomeHandlerOther');
+    bindHandlerOther('expenseHandler','expenseHandlerOther');
+    ['bentoDate','pkgDate','salesDate','refillDate','incomeDate','expenseDate','settleDate'].forEach(id => {
+      $(id).value = today();
+    });
+    renderProductGrid();
+
+    await refreshAll();
+    startPolling();
+  }
+
+  init();
+</script>
+</body>
+</html>
