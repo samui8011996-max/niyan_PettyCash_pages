@@ -577,6 +577,13 @@
 
 <div class="container">
   <header>
+   <button class="settings-btn" onclick="openTools()" title="工具" aria-label="工具">
+  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"
+       stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="3"></circle>
+    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+  </svg>
+</button>
 <img src="icon.png" alt="泥研製所" class="logo-img">
 <div class="subtitle">— 泥研製所 零用金 —</div>
   </header>
@@ -846,6 +853,18 @@
         </thead>
         <tbody id="recordsBody"></tbody>
       </table>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="toolsModal">
+  <div class="modal" style="max-width:360px;">
+    <h2>工具</h2>
+    <div class="modal-actions" style="justify-content:stretch;">
+      <button type="button" class="btn" id="btnExportExcel" style="width:100%;">⬇ 匯出 Excel</button>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-outline btn-small" onclick="closeTools()">關閉</button>
     </div>
   </div>
 </div>
@@ -1942,6 +1961,9 @@ function calcCartTotal() {
     }, POLL_INTERVAL_MS);
   }
 
+  function openTools() { $('toolsModal').classList.add('show'); }
+  function closeTools() { $('toolsModal').classList.remove('show'); }
+
   async function init() {
     ['bentoHandler','pkgHandler','salesHandler','incomeHandler','expenseHandler'].forEach(id => {
       fillPeopleSelect($(id));
@@ -1961,6 +1983,43 @@ function calcCartTotal() {
   }
 
   init();
+</script>
+
+<!-- ============ Excel 匯出 ============ -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+(function () {
+  function buildWorkbook() {
+    const rows = allRecords.map(r => ({
+      '日期': r.date || '',
+      '項目': r.item || '',
+      '類型': r.type || '',
+      '收入': r.income === '' || r.income == null ? '' : Number(r.income),
+      '支出': r.expense === '' || r.expense == null ? '' : Number(r.expense),
+      '經手人': r.handler || '',
+    }));
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rows.length ? rows : [{}]), '零用金記錄');
+    return wb;
+  }
+
+  document.getElementById('btnExportExcel')?.addEventListener('click', () => {
+    if (typeof XLSX === 'undefined') { toast('匯出套件載入失敗,請檢查網路連線', 'error'); return; }
+    const btn = document.getElementById('btnExportExcel');
+    btn.disabled = true;
+    try {
+      const wb = buildWorkbook();
+      const stamp = new Date(Date.now() + 8 * 3600 * 1000).toISOString().slice(0, 16).replace('T', '_').replace(':', '');
+      XLSX.writeFile(wb, `泥研製所_零用金_${stamp}.xlsx`);
+      toast('已匯出 Excel', 'success');
+      closeTools();
+    } catch (e) {
+      toast('匯出失敗:' + e.message, 'error');
+    } finally {
+      btn.disabled = false;
+    }
+  });
+})();
 </script>
 </body>
 </html>
