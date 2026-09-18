@@ -1,2 +1,3 @@
 .wrangler/
 node_modules/
+restore_pettycash_dupes_*.sql

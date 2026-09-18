@@ -571,6 +571,115 @@
 
   /* 記錄表格:用外框包成圓角(深色表頭的上方兩角也會跟著圓) */
   .records-wrap { border: 1px solid var(--line); border-radius: 12px; }
+
+  /* ===== 每日現金清點 ===== */
+  .denom-list {
+    border: 1px solid var(--line); border-radius: 12px;
+    overflow: hidden; background: white; margin-bottom: 18px;
+  }
+  .denom-row {
+    display: grid; grid-template-columns: 104px 1fr 116px;
+    align-items: center; gap: 12px;
+    padding: 9px 14px; border-bottom: 1px solid var(--line-soft);
+  }
+  .denom-row:last-child { border-bottom: none; }
+  .denom-row.coin { background: rgba(196,165,116,0.07); }
+  .denom-face {
+    font-family: 'JetBrains Mono', monospace; font-size: 18px; font-weight: 600;
+  }
+  .denom-face .unit {
+    font-family: 'Noto Serif TC', serif; font-size: 12px; font-weight: 400;
+    color: var(--ink-faded); margin-left: 5px;
+  }
+  .denom-row input[type="number"] {
+    text-align: center; min-width: 0; padding: 8px 6px;
+    font-family: 'JetBrains Mono', monospace; font-size: 17px;
+  }
+  .denom-sub {
+    text-align: right; font-family: 'JetBrains Mono', monospace;
+    font-size: 16px; color: var(--ink-soft);
+  }
+  .denom-sub.zero { color: #cfc8b8; }
+  .denom-total {
+    display: flex; justify-content: space-between; align-items: baseline;
+    padding: 14px 16px; background: #333736; color: var(--bg-card);
+    border-radius: 12px; margin-bottom: 18px;
+  }
+  .denom-total .dt-label {
+    font-family: 'Fraunces', serif; font-size: 13px; letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+  .denom-total .dt-value {
+    font-family: 'JetBrains Mono', monospace; font-size: 26px; font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .count-verdict {
+    border: 1px solid var(--line); border-left: 4px solid var(--ink-faded);
+    border-radius: 12px; background: white; padding: 16px 18px; margin-bottom: 18px;
+  }
+  .count-verdict .cv-main {
+    font-family: 'Noto Serif TC', serif; font-size: 20px; font-weight: 600;
+    color: var(--ink-soft);
+  }
+  .count-verdict .cv-sub {
+    margin-top: 6px; font-family: 'JetBrains Mono', monospace;
+    font-size: 13px; color: var(--ink-faded);
+  }
+  .count-verdict.ok    { border-left-color: var(--live); }
+  .count-verdict.ok    .cv-main { color: var(--live); }
+  .count-verdict.over  { border-left-color: var(--accent-soft); }
+  .count-verdict.over  .cv-main { color: #a8792b; }
+  .count-verdict.short { border-left-color: var(--red); }
+  .count-verdict.short .cv-main { color: var(--red); }
+
+  .count-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+  .count-actions .btn { flex: 1 1 200px; }
+  .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+  .count-history { list-style: none; display: grid; gap: 10px; }
+  .count-history li {
+    border: 1px solid var(--line); border-radius: 10px;
+    background: white; padding: 12px 14px;
+  }
+  .count-history .ch-head {
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  }
+  .count-history .ch-date {
+    font-family: 'JetBrains Mono', monospace; font-size: 15px; font-weight: 600;
+  }
+  .count-history .ch-badge {
+    font-size: 11px; padding: 2px 9px; border-radius: 999px;
+    font-family: 'Noto Serif TC', serif;
+  }
+  .count-history .ch-badge.ok    { background: var(--live); color: #fff; }
+  .count-history .ch-badge.over  { background: var(--accent-soft); color: var(--ink); }
+  .count-history .ch-badge.short { background: var(--red); color: #fff; }
+  .count-history .ch-del {
+    margin-left: auto; background: none; border: 1px solid var(--line);
+    color: var(--ink-faded); width: 26px; height: 26px; border-radius: 7px;
+    cursor: pointer; line-height: 1; font-size: 15px;
+  }
+  .count-history .ch-del:hover { border-color: var(--red); color: var(--red); }
+  .count-history .ch-nums {
+    margin-top: 6px; font-family: 'JetBrains Mono', monospace;
+    font-size: 13px; color: var(--ink-soft);
+  }
+  .count-history .ch-denoms {
+    margin-top: 4px; font-family: 'JetBrains Mono', monospace;
+    font-size: 12px; color: var(--ink-faded);
+  }
+  .count-history .ch-note {
+    margin-top: 5px; font-size: 13px; color: var(--ink-soft); font-style: italic;
+  }
+  @media (max-width: 430px) {
+    .denom-row { grid-template-columns: 82px 1fr 92px; gap: 8px; padding: 8px 10px; }
+    .denom-face { font-size: 16px; }
+    .denom-sub { font-size: 14px; }
+    .denom-total { padding: 12px 14px; gap: 10px; }
+    .denom-total .dt-label { font-size: 11px; letter-spacing: 0.06em; }
+    .denom-total .dt-value { font-size: 22px; }
+  }
 </style>
 </head>
 <body>
@@ -609,6 +718,7 @@
     <button class="tab" data-panel="package"><span class="num"></span>包裹</button>
     <button class="tab" data-panel="sales"><span class="num"></span>銷售</button>
     <button class="tab" data-panel="extra"><span class="num"></span>收支</button>
+    <button class="tab" data-panel="count"><span class="num"></span>清點</button>
     <button class="tab" data-panel="records"><span class="num"></span>記錄</button>
   </div>
 
@@ -786,6 +896,54 @@
       </div>
     </div>
     <input type="text" id="expenseHandlerOther" placeholder="其他經手人姓名" style="display:none; margin-top:8px;">
+  </div>
+
+  <div class="panel" id="panel-count">
+    <div class="panel-header">
+      <div class="panel-title">清點 <span class="en">Cash Count</span></div>
+      <div style="display:flex; gap:8px;">
+        <button class="btn btn-outline btn-small" onclick="clearCountInputs()">清空張數</button>
+        <button class="btn btn-outline btn-small" onclick="refreshAll()">↻ 重新載入</button>
+      </div>
+    </div>
+
+    <div class="form-row cols-2">
+      <div><label>清點日期</label><input type="date" id="countDate" onchange="onCountDateChange()"></div>
+      <div><label>清點人</label><select id="countHandler"></select></div>
+    </div>
+    <input type="text" id="countHandlerOther" placeholder="其他清點人姓名" style="display:none; margin-bottom:16px;">
+
+    <div class="denom-list" id="denomList"></div>
+
+    <div class="denom-total">
+      <span class="dt-label">實點現金 Counted</span>
+      <span class="dt-value" id="countedTotal">NT$ 0</span>
+    </div>
+
+    <div class="count-verdict" id="countVerdict">
+      <div class="cv-main" id="cvMain">尚未輸入張數</div>
+      <div class="cv-sub" id="cvSub">實點 NT$ 0 · 帳上 NT$ 0</div>
+    </div>
+
+    <div class="form-row">
+      <div>
+        <label>備註(選填)</label>
+        <input type="text" id="countNote" placeholder="例如:少的 100 元是先借給志益,明天還">
+      </div>
+    </div>
+
+    <div class="count-actions">
+      <button class="btn" id="saveCountBtn" onclick="submitCount()">儲存清點結果</button>
+      <button class="btn btn-outline" id="adjustCountBtn" onclick="submitCountAdjust()" disabled>登記差額調整</button>
+    </div>
+    <p style="font-size:12px; color:var(--ink-faded); font-style:italic; margin-top:10px; line-height:1.7;">
+      💡「帳上餘額」= 該日期(含當天)以前所有收入減支出。<br>
+      💡「登記差額調整」會在零用金帳裡補一筆收入/支出,把帳調成跟實際現金一樣 — 確定差額找不回來再按。
+    </p>
+
+    <div class="divider"></div>
+    <h3 style="font-family:'Fraunces',serif; font-weight:500; font-size:17px; margin-bottom:14px;">清點紀錄 <span style="font-style:italic; font-size:13px; color:var(--ink-faded); margin-left:8px;">Count History</span></h3>
+    <ul class="count-history" id="countHistory"></ul>
   </div>
 
   <div class="panel" id="panel-records">
@@ -988,6 +1146,7 @@
 
   const API_URL = '/api';
   let allRecords = [];
+  let allCounts = [];
   let bentoSelections = {};
   let confirmedBento = {};
   let cart = [];
@@ -1145,6 +1304,7 @@
       updateSyncStatus('loading');
       const res = await api('getAll');
       allRecords = res.records || [];
+      allCounts = res.counts || [];
       updateSyncStatus('connected');
       $('sharedBanner').classList.remove('offline');
       $('sharedBannerText').textContent = `即時共用模式 · 每 ${POLL_INTERVAL_MS/1000} 秒自動同步其他同事的選擇`;
@@ -1156,6 +1316,8 @@
       renderRecords();
       updateTotals();
       renderLunchSettle();
+      renderCountHistory();
+      recalcCount();
     } catch (e) {
       console.error(e);
       updateSyncStatus('error');
@@ -1176,6 +1338,7 @@
       document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
       tab.classList.add('active');
       $('panel-' + tab.dataset.panel).classList.add('active');
+      if (tab.dataset.panel === 'count') loadCountForDate();
     });
   });
 
@@ -1930,6 +2093,235 @@ function calcCartTotal() {
     }
   }
 
+  /* ============ 每日現金清點 ============ */
+  const DENOMS = [
+    { v: 1000, unit: '張', coin: false },
+    { v: 500,  unit: '張', coin: false },
+    { v: 100,  unit: '張', coin: false },
+    { v: 50,   unit: '個', coin: true  },
+    { v: 10,   unit: '個', coin: true  },
+    { v: 5,    unit: '個', coin: true  },
+    { v: 1,    unit: '個', coin: true  },
+  ];
+  const ADJ_PREFIX = '現金盤點差額調整';
+
+  function renderDenomRows() {
+    $('denomList').innerHTML = DENOMS.map(d => `
+      <div class="denom-row${d.coin ? ' coin' : ''}">
+        <div class="denom-face">$${d.v}<span class="unit">${d.unit}</span></div>
+        <input type="number" id="denom-${d.v}" min="0" step="1" inputmode="numeric"
+               placeholder="0" oninput="recalcCount()" onfocus="this.select()">
+        <div class="denom-sub zero" id="denomSub-${d.v}">$0</div>
+      </div>`).join('');
+  }
+
+  function getDenomCounts() {
+    const out = {};
+    DENOMS.forEach(d => {
+      const n = Number($('denom-' + d.v).value || 0);
+      out[d.v] = (Number.isFinite(n) && n > 0) ? Math.trunc(n) : 0;
+    });
+    return out;
+  }
+
+  function setDenomCounts(map) {
+    DENOMS.forEach(d => {
+      const n = Number((map || {})[d.v] || 0);
+      $('denom-' + d.v).value = n > 0 ? n : '';
+    });
+  }
+
+  function clearCountInputs() {
+    setDenomCounts({});
+    $('countNote').value = '';
+    recalcCount();
+  }
+
+  // 帳上餘額:該日期(含當天)以前的收入 − 支出
+  function bookBalanceAsOf(dateStr) {
+    if (!dateStr) return 0;
+    let bal = 0;
+    allRecords.forEach(r => {
+      const d = (r.date || '').slice(0, 10);
+      if (!d || d <= dateStr) bal += Number(r.income || 0) - Number(r.expense || 0);
+    });
+    return bal;
+  }
+
+  function hasAdjustRecord(dateStr) {
+    return allRecords.some(r =>
+      (r.date || '').slice(0, 10) === dateStr &&
+      String(r.item || '').startsWith(ADJ_PREFIX));
+  }
+
+  function recalcCount() {
+    const denoms = getDenomCounts();
+    let counted = 0, anyInput = false;
+    DENOMS.forEach(d => {
+      const sub = d.v * denoms[d.v];
+      counted += sub;
+      if (denoms[d.v] > 0) anyInput = true;
+      const el = $('denomSub-' + d.v);
+      el.textContent = '$' + sub.toLocaleString();
+      el.classList.toggle('zero', sub === 0);
+    });
+
+    const date = $('countDate').value || today();
+    const book = bookBalanceAsOf(date);
+    const diff = counted - book;
+
+    $('countedTotal').textContent = fmt(counted);
+    const box = $('countVerdict');
+    box.className = 'count-verdict';
+    if (!anyInput) {
+      $('cvMain').textContent = '尚未輸入張數';
+    } else if (diff === 0) {
+      box.classList.add('ok');
+      $('cvMain').textContent = '✓ 金額相符,今天沒問題';
+    } else if (diff > 0) {
+      box.classList.add('over');
+      $('cvMain').textContent = '現金多了 ' + fmt(diff);
+    } else {
+      box.classList.add('short');
+      $('cvMain').textContent = '現金少了 ' + fmt(-diff);
+    }
+    $('cvSub').textContent = `實點 ${fmt(counted)} · 帳上 ${fmt(book)}`;
+
+    const adjusted = hasAdjustRecord(date);
+    const btn = $('adjustCountBtn');
+    btn.disabled = !anyInput || diff === 0 || adjusted;
+    btn.textContent = adjusted ? '此日已登記過調整' : '登記差額調整';
+
+    return { denoms, counted, book, diff, anyInput, date };
+  }
+
+  function setHandlerSelect(selectId, otherId, handler) {
+    const sel = $(selectId), other = $(otherId);
+    if (!handler) return;
+    if (PEOPLE.includes(handler)) {
+      sel.value = handler;
+      other.style.display = 'none';
+      other.value = '';
+    } else {
+      sel.value = '其他';
+      other.style.display = 'block';
+      other.value = handler.startsWith('其他-') ? handler.slice(3) : handler;
+    }
+  }
+
+  // force=true:換日期,一定重載;force=false:切分頁,已經在打的張數不覆蓋掉
+  function loadCountForDate(force) {
+    const date = $('countDate').value || today();
+    const typing = DENOMS.some(d => String($('denom-' + d.v).value || '').trim() !== '');
+    if (!force && typing) { recalcCount(); return; }
+    const saved = allCounts.find(c => (c.date || '') === date);
+    setDenomCounts(saved ? saved.denoms : {});
+    $('countNote').value = saved ? (saved.note || '') : '';
+    if (saved) setHandlerSelect('countHandler', 'countHandlerOther', saved.handler);
+    recalcCount();
+  }
+
+  function onCountDateChange() { loadCountForDate(true); }
+
+  function submitCount() {
+    runSubmit('cashCount', 'saveCountBtn', '儲存中…', async () => {
+      const st = recalcCount();
+      if (!st.anyInput) return toast('請先輸入張數', 'error');
+      const handler = getHandler('countHandler', 'countHandlerOther');
+      try {
+        await api('saveCount', {
+          count: {
+            date: st.date, denoms: st.denoms, book: st.book,
+            handler, note: $('countNote').value.trim(),
+          }
+        });
+        toast(st.diff === 0
+          ? '已儲存 · 金額相符'
+          : '已儲存 · ' + (st.diff > 0 ? '多 ' : '少 ') + fmt(Math.abs(st.diff)),
+          st.diff === 0 ? 'success' : '');
+        await refreshAll();
+      } catch (e) { toast('儲存失敗:' + e.message, 'error'); }
+    });
+  }
+
+  function submitCountAdjust() {
+    // runSubmit 的 finally 會還原按鈕文字/啟用狀態,所以結束後要再 recalc 一次,
+    // 否則已經調整過的日子按鈕會停在「登記差額調整」而且是可按的
+    runSubmit('cashCountAdjust', 'adjustCountBtn', '登記中…', async () => {
+      const st = recalcCount();
+      if (!st.anyInput || st.diff === 0) return toast('目前沒有差額需要調整', 'error');
+      if (hasAdjustRecord(st.date)) return toast('這天已經登記過差額調整了', 'error');
+
+      const word = st.diff > 0 ? '盤盈' : '盤虧';
+      const amount = Math.abs(st.diff);
+      const ok = window.confirm(
+        `${st.date} 實際現金比帳上${st.diff > 0 ? '多' : '少'} ${fmt(amount)}。\n\n` +
+        `要在零用金帳裡補一筆「${word}」${fmt(amount)},把帳上餘額調成 ${fmt(st.counted)} 嗎?\n` +
+        `(這筆調整會出現在記錄分頁,需要的話可以再刪掉)`
+      );
+      if (!ok) return;
+
+      const handler = getHandler('countHandler', 'countHandlerOther');
+      const note = $('countNote').value.trim();
+      try {
+        // 先存原始清點結果當底稿(保留調整前的差額),再寫調整帳
+        await api('saveCount', {
+          count: { date: st.date, denoms: st.denoms, book: st.book, handler, note }
+        });
+        await api('append', {
+          record: {
+            date: st.date,
+            item: `${ADJ_PREFIX}【${word}${note ? ' · ' + note : ''}】`,
+            type: st.diff > 0 ? '收入' : '支出',
+            income: st.diff > 0 ? amount : '',
+            expense: st.diff > 0 ? '' : amount,
+            handler,
+          }
+        });
+        toast(`已登記${word} ${fmt(amount)}`, 'success');
+        await refreshAll();
+      } catch (e) { toast('登記失敗:' + e.message, 'error'); }
+    }).then(recalcCount);
+  }
+
+  async function removeCount(date) {
+    if (!window.confirm(`確定刪除 ${date} 的清點紀錄?\n(只刪清點紀錄,零用金帳不會動)`)) return;
+    try {
+      await api('deleteCount', { date });
+      toast('已刪除清點紀錄', 'success');
+      await refreshAll();
+    } catch (e) { toast('刪除失敗:' + e.message, 'error'); }
+  }
+
+  function renderCountHistory() {
+    const ul = $('countHistory');
+    if (!allCounts.length) {
+      ul.innerHTML = '<li style="border-style:dashed; text-align:center; color:var(--ink-faded); font-style:italic;">還沒有清點紀錄</li>';
+      return;
+    }
+    ul.innerHTML = allCounts.map(c => {
+      const diff = Number(c.diff || 0);
+      const cls = diff === 0 ? 'ok' : (diff > 0 ? 'over' : 'short');
+      const badge = diff === 0 ? '相符'
+        : (diff > 0 ? '多 $' : '少 $') + Math.abs(diff).toLocaleString();
+      const breakdown = DENOMS
+        .filter(d => Number((c.denoms || {})[d.v] || 0) > 0)
+        .map(d => `${d.v}×${c.denoms[d.v]}`).join('   ') || '(未填張數)';
+      const adjusted = hasAdjustRecord(c.date)
+        ? ' · <span style="color:var(--live);">已登記調整</span>' : '';
+      return `<li>
+        <div class="ch-head">
+          <span class="ch-date">${escapeHtml(c.date)}</span>
+          <span class="ch-badge ${cls}">${badge}</span>
+          <button class="ch-del" onclick="removeCount('${escapeHtml(c.date)}')" title="刪除這筆清點">×</button>
+        </div>
+        <div class="ch-nums">實點 ${fmt(c.counted)} · 帳上 ${fmt(c.book)}${c.handler ? ' · ' + escapeHtml(c.handler) : ''}${adjusted}</div>
+        <div class="ch-denoms">${escapeHtml(breakdown)}</div>
+        ${c.note ? `<div class="ch-note">${escapeHtml(c.note)}</div>` : ''}
+      </li>`;
+    }).join('');
+  }
+
   function updateTotals() {
     let inc = 0, exp = 0, mInc = 0, mExp = 0;
     const ym = today().slice(0,7);
@@ -1965,7 +2357,7 @@ function calcCartTotal() {
   function closeTools() { $('toolsModal').classList.remove('show'); }
 
   async function init() {
-    ['bentoHandler','pkgHandler','salesHandler','incomeHandler','expenseHandler'].forEach(id => {
+    ['bentoHandler','pkgHandler','salesHandler','incomeHandler','expenseHandler','countHandler'].forEach(id => {
       fillPeopleSelect($(id));
     });
     bindHandlerOther('bentoHandler','bentoHandlerOther');
@@ -1973,10 +2365,12 @@ function calcCartTotal() {
     bindHandlerOther('salesHandler','salesHandlerOther');
     bindHandlerOther('incomeHandler','incomeHandlerOther');
     bindHandlerOther('expenseHandler','expenseHandlerOther');
-    ['bentoDate','pkgDate','salesDate','refillDate','incomeDate','expenseDate','settleDate'].forEach(id => {
+    bindHandlerOther('countHandler','countHandlerOther');
+    ['bentoDate','pkgDate','salesDate','refillDate','incomeDate','expenseDate','settleDate','countDate'].forEach(id => {
       $(id).value = today();
     });
     renderProductGrid();
+    renderDenomRows();
 
     await refreshAll();
     startPolling();
