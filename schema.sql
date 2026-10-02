@@ -27,3 +27,29 @@ CREATE TABLE IF NOT EXISTS petty_cash_counts (
   created_at TEXT,
   updated_at TEXT
 );
+
+-- 餐費與零用金分離(2026-10-02 起):點餐只記在這裡,不再寫入 petty_cash_records
+CREATE TABLE IF NOT EXISTS lunch_orders (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  date TEXT NOT NULL,
+  person TEXT NOT NULL,
+  item TEXT NOT NULL,
+  less_rice INTEGER NOT NULL DEFAULT 0,
+  price REAL NOT NULL DEFAULT 0,
+  handler TEXT,
+  created_at TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_lunch_orders_date   ON lunch_orders(date);
+CREATE INDEX IF NOT EXISTS idx_lunch_orders_person ON lunch_orders(person);
+
+-- 每個人繳的餐費
+CREATE TABLE IF NOT EXISTS lunch_payments (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  date TEXT NOT NULL,
+  person TEXT NOT NULL,
+  amount REAL NOT NULL,
+  note TEXT,
+  handler TEXT,
+  created_at TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_lunch_payments_person ON lunch_payments(person);

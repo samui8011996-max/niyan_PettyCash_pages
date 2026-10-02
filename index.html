@@ -672,6 +672,72 @@
   .count-history .ch-note {
     margin-top: 5px; font-size: 13px; color: var(--ink-soft); font-style: italic;
   }
+  /* ===== 餐費 ===== */
+  .meal-note {
+    background: rgba(196,165,116,0.14); border: 1px solid var(--line);
+    border-radius: 10px; padding: 11px 14px; margin-bottom: 18px;
+    font-size: 13px; color: var(--ink-soft); line-height: 1.7;
+  }
+  .meal-month-pick {
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    background: white; border: 1px solid var(--line); border-radius: 10px;
+    padding: 10px 14px; margin-bottom: 20px;
+  }
+  .meal-h3 {
+    font-family: 'Fraunces', serif; font-weight: 500; font-size: 17px;
+    margin-bottom: 14px;
+  }
+  .meal-h3 .en-sub {
+    font-style: italic; font-size: 13px; color: var(--ink-faded); margin-left: 8px;
+  }
+  .meal-person-list { display: grid; gap: 10px; }
+  .mp-card {
+    border: 1px solid var(--line); border-radius: 10px;
+    background: white; padding: 12px 14px;
+  }
+  .mp-card.settled { background: rgba(61,90,44,0.04); }
+  .mp-head { display: flex; align-items: center; gap: 10px; }
+  .mp-name { font-size: 15px; font-weight: 600; }
+  .mp-owed {
+    margin-left: auto; font-family: 'JetBrains Mono', monospace;
+    font-size: 16px; font-weight: 600; white-space: nowrap;
+  }
+  .mp-nums {
+    margin-top: 7px; font-family: 'JetBrains Mono', monospace;
+    font-size: 12px; color: var(--ink-soft); line-height: 1.8;
+  }
+  .mp-nums .sep { color: var(--line); margin: 0 6px; }
+  .mp-empty {
+    border: 1px dashed var(--line); border-radius: 10px;
+    padding: 18px; text-align: center; color: var(--ink-faded); font-style: italic;
+  }
+  .pay-list { list-style: none; display: grid; gap: 8px; }
+  .pay-list li {
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    border: 1px solid var(--line); border-radius: 10px;
+    background: white; padding: 10px 14px;
+  }
+  .pay-list li.empty {
+    border-style: dashed; justify-content: center;
+    color: var(--ink-faded); font-style: italic;
+  }
+  .pay-list .pay-date {
+    font-family: 'JetBrains Mono', monospace; font-size: 12px;
+    color: var(--ink-faded); margin-left: 8px;
+  }
+  .pay-list .pay-note { font-size: 12px; color: var(--ink-soft); margin-left: 8px; font-style: italic; }
+  .pay-list .pay-amt {
+    margin-left: auto; font-family: 'JetBrains Mono', monospace;
+    font-size: 15px; color: var(--green); font-weight: 600;
+  }
+  .meal-day { margin-bottom: 16px; }
+  .meal-day-head {
+    display: flex; justify-content: space-between; align-items: baseline;
+    font-family: 'JetBrains Mono', monospace; font-size: 14px;
+    padding: 6px 2px; border-bottom: 1px solid var(--line-soft); margin-bottom: 6px;
+  }
+  .meal-day-head span:last-child { color: var(--ink-soft); font-size: 13px; }
+
   @media (max-width: 430px) {
     .denom-row { grid-template-columns: 82px 1fr 92px; gap: 8px; padding: 8px 10px; }
     .denom-face { font-size: 16px; }
@@ -715,6 +781,7 @@
 
   <div class="tabs">
     <button class="tab active" data-panel="bento"><span class="num"></span>點餐</button>
+    <button class="tab" data-panel="meal"><span class="num"></span>餐費</button>
     <button class="tab" data-panel="package"><span class="num"></span>包裹</button>
     <button class="tab" data-panel="sales"><span class="num"></span>銷售</button>
     <button class="tab" data-panel="extra"><span class="num"></span>收支</button>
@@ -742,15 +809,15 @@
       <ul class="order-list" id="orderList"></ul>
       <div class="settle-grid">
         <div class="settle-item bento">
-          <span class="s-label">便當款 <span class="s-hint">給便當店</span></span>
-          <span class="s-amount" id="settleBento">$0</span>
+          <span class="s-label">份數 <span class="s-hint">今天訂幾份</span></span>
+          <span class="s-amount" id="settleCount">0</span>
         </div>
         <div class="settle-item subsidy">
-          <span class="s-label">補貼款 <span class="s-hint">發給員工</span></span>
-          <span class="s-amount" id="settleSubsidy">$0</span>
+          <span class="s-label">人數 <span class="s-hint">幾個人訂</span></span>
+          <span class="s-amount" id="settlePeople">0</span>
         </div>
         <div class="settle-item total">
-          <span class="s-label">總餐費 <span class="s-hint">零用金支出</span></span>
+          <span class="s-label">餐費合計 <span class="s-hint">各自分攤·不扣零用金</span></span>
           <span class="s-amount" id="settleTotal">$0</span>
         </div>
       </div>
@@ -768,6 +835,55 @@
     <p style="margin-top:10px; font-size:12px; color:var(--ink-soft); font-style:italic;">
       💡 上傳後會寫入 Google Sheet 主表,✓ 綠色標記者為已上傳。已上傳的選擇不會重複送出。
     </p>
+  </div>
+
+  <div class="panel" id="panel-meal">
+    <div class="panel-header">
+      <div class="panel-title">餐費 <span class="en">Meal Account</span></div>
+      <button class="btn btn-outline btn-small" onclick="refreshAll()">↻ 重新載入</button>
+    </div>
+
+    <div class="meal-note">
+      餐費與零用金<strong>分開計算</strong> — 2026-10-02 起點餐只記在這一頁,不會動到零用金餘額。
+    </div>
+
+    <div class="stats-row">
+      <div class="stat-box"><div class="stat-label">本月餐費</div><div class="stat-value" id="mealMonthTotal">—</div></div>
+      <div class="stat-box"><div class="stat-label">累計應付</div><div class="stat-value" id="mealOrdered">—</div></div>
+      <div class="stat-box income"><div class="stat-label">累計已繳</div><div class="stat-value" id="mealPaid">—</div></div>
+      <div class="stat-box expense"><div class="stat-label">尚未收齊</div><div class="stat-value" id="mealOwed">—</div></div>
+    </div>
+
+    <div class="meal-month-pick">
+      <label style="margin:0;">月份</label>
+      <input type="month" id="mealMonth" onchange="renderMeal()" style="width:auto;">
+      <button class="btn btn-outline btn-small" onclick="setMealMonthNow()">本月</button>
+    </div>
+
+    <h3 class="meal-h3">每人結算 <span class="en-sub">Per Person</span></h3>
+    <div class="meal-person-list" id="mealPersonBody"></div>
+
+    <div class="divider"></div>
+    <h3 class="meal-h3">登記收款 <span class="en-sub">Record Payment</span></h3>
+    <div class="form-row cols-3">
+      <div><label>姓名</label><select id="payPerson"></select></div>
+      <div><label>金額</label><input type="number" id="payAmount" min="1" placeholder="0"></div>
+      <div><label>日期</label><input type="date" id="payDate"></div>
+    </div>
+    <div class="form-row cols-2">
+      <div><label>備註(選填)</label><input type="text" id="payNote" placeholder="例如:十月份"></div>
+      <div style="display:flex; align-items:flex-end;">
+        <button class="btn" id="submitPayBtn" onclick="submitLunchPayment()" style="width:100%;">登記收款</button>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+    <h3 class="meal-h3">收款紀錄 <span class="en-sub">Payments</span></h3>
+    <ul class="pay-list" id="mealPayList"></ul>
+
+    <div class="divider"></div>
+    <h3 class="meal-h3">當月點餐明細 <span class="en-sub">Orders</span></h3>
+    <div id="mealDetail"></div>
   </div>
 
   <div class="panel" id="panel-package">
@@ -1080,12 +1196,6 @@
         { name: '豬排(一份)', price: 70 }, { name: '鴨肉(一份)', price: 90 }
       ]
     },
-    {
-      store: '午餐補助',
-      items: [
-        { name: '午餐補助', price: 100 }
-      ]
-    }
   ];
   const BENTO_VARIANTS = {
     '滷肉飯': { sizePrice: { '小': 45, '大': 55 } },
@@ -1147,6 +1257,9 @@
   const API_URL = '/api';
   let allRecords = [];
   let allCounts = [];
+  let allLunchOrders = [];       // 餐費:點餐明細(與零用金分離)
+  let allLunchPayments = [];     // 餐費:每人繳款
+  let lunchTotals = [];          // 餐費:後端算好的每人累計 {person,ordered,paid,owed}
   let bentoSelections = {};
   let confirmedBento = {};
   let cart = [];
@@ -1240,62 +1353,24 @@
     }
   }
 
-  function parseBentoFromRecord(r) {
-    if (r.type !== '支出') return null;
-    const item = String(r.item || '');
-
-    const bentoMatch = item.match(/^(.+?)\s*[—–-]\s*(.+?)\s*[—–-]\s*便當\s*$/);
-    if (bentoMatch) {
-      const person = bentoMatch[1].trim();
-      let bento = bentoMatch[2].trim();
-      let lessRice = false;
-      const lr = bento.match(/^(.*?)\s*[((]\s*少飯\s*[))]\s*$/);
-      if (lr) { bento = lr[1].trim(); lessRice = true; }
-      return {
-        date: r.date, person, bento,
-        lessRice: lessRice ? '少飯' : '',
-        price: Number(r.expense || 0),
-        type: '便當', handler: r.handler || ''
-      };
-    }
-
-    if (item.indexOf('午餐補助') !== -1) {
-      const subMatch = item.match(/^(.+?)\s*[—–-]\s*午餐補助/);
-      const person = subMatch ? subMatch[1].trim() : '';
-      return {
-        date: r.date, person, bento: '午餐補助', lessRice: '',
-        price: Number(r.expense || 0),
-        type: '補貼', handler: r.handler || ''
-      };
-    }
-
-    return null;
-  }
 
   function getLunchByDate(dateStr) {
     if (!dateStr) return [];
-    const out = [];
-    for (const r of allRecords) {
-      if (r.date !== dateStr) continue;
-      const parsed = parseBentoFromRecord(r);
-      if (parsed) out.push(parsed);
-    }
-    return out;
+    return allLunchOrders.filter(o => o.date === dateStr);
   }
 
   function syncConfirmedFromRecords() {
     const date = $('bentoDate').value || today();
     confirmedBento = {};
-    getLunchByDate(date).forEach(r => {
-      const menu = BENTO_MENU.find(m => m.name === r.bento);
-      if (menu && r.person) {
-        if (!confirmedBento[r.person]) confirmedBento[r.person] = [];
-        confirmedBento[r.person].push({
-          item: r.bento,
-          price: menu.price,
-          lessRice: r.lessRice === '少飯'
-        });
-      }
+    getLunchByDate(date).forEach(o => {
+      if (!o.person) return;
+      if (!confirmedBento[o.person]) confirmedBento[o.person] = [];
+      confirmedBento[o.person].push({
+        id: o.id,
+        item: o.item,
+        price: Number(o.price || 0),
+        lessRice: !!o.lessRice
+      });
     });
   }
 
@@ -1305,6 +1380,9 @@
       const res = await api('getAll');
       allRecords = res.records || [];
       allCounts = res.counts || [];
+      allLunchOrders = res.lunchOrders || [];
+      allLunchPayments = res.lunchPayments || [];
+      lunchTotals = res.lunchTotals || [];
       updateSyncStatus('connected');
       $('sharedBanner').classList.remove('offline');
       $('sharedBannerText').textContent = `即時共用模式 · 每 ${POLL_INTERVAL_MS/1000} 秒自動同步其他同事的選擇`;
@@ -1318,6 +1396,7 @@
       renderLunchSettle();
       renderCountHistory();
       recalcCount();
+      renderMeal();
     } catch (e) {
       console.error(e);
       updateSyncStatus('error');
@@ -1339,6 +1418,7 @@
       tab.classList.add('active');
       $('panel-' + tab.dataset.panel).classList.add('active');
       if (tab.dataset.panel === 'count') loadCountForDate();
+      if (tab.dataset.panel === 'meal') renderMeal();
     });
   });
 
@@ -1490,24 +1570,13 @@
 
 window.cancelBento = async (person) => {
     const date = $('bentoDate').value || today();
-    const targets = allRecords.filter(r => {
-      if (r.date !== date) return false;
-      const parsed = parseBentoFromRecord(r);
-      return parsed && parsed.person === person;
-    });
+    const targets = getLunchByDate(date).filter(o => o.person === person);
     if (!targets.length) return toast('找不到對應的已上傳記錄', 'error');
-    if (!confirm(`確定取消「${person}」這筆已上傳的訂餐並重新選擇?\n(會從試算表刪除該筆)`)) return;
+    if (!confirm(`確定取消「${person}」${date} 已上傳的訂餐並重新選擇?`)) return;
 
     if (!lockSubmit('cancel-' + person)) return;
     try {
-      await api('deleteRecords', {
-        targets: targets.map(r => ({
-          row: r.row, date: r.date, item: r.item, type: r.type,
-          income: r.income === '' || r.income == null ? '' : Number(r.income),
-          expense: r.expense === '' || r.expense == null ? '' : Number(r.expense),
-          handler: r.handler
-        }))
-      });
+      await api('deleteLunchOrders', { ids: targets.map(o => o.id) });
       toast(`已取消 ${person} 的訂餐,可重新選擇`, 'success');
       delete confirmedBento[person];
       delete bentoSelections[person];
@@ -1535,15 +1604,11 @@ window.cancelBento = async (person) => {
     }
     $('orderSummary').style.display = 'block';
     list.innerHTML = '';
-    let bentoSum = 0, subsidySum = 0, pendingCount = 0;
+    let totalSum = 0, pendingCount = 0;
     entries.forEach(({ person, sel, confirmed }) => {
       const label = displayLabel(sel);
       const complete = isVariantComplete(sel);
-      const isSubsidy = label === '午餐補助';
-      if (complete) {
-        if (isSubsidy) subsidySum += sel.price;
-        else bentoSum += sel.price;
-      }
+      if (complete) totalSum += sel.price;
 
       if (!confirmed) pendingCount++;
       const li = document.createElement('li');
@@ -1554,11 +1619,10 @@ window.cancelBento = async (person) => {
       `;
       list.appendChild(li);
     });
-    const totalSum = bentoSum + subsidySum;
-    $('settleBento').textContent = '$' + bentoSum.toLocaleString();
-    $('settleSubsidy').textContent = '$' + subsidySum.toLocaleString();
     $('settleTotal').textContent = '$' + totalSum.toLocaleString();
     const peopleCount = new Set(entries.map(e => e.person)).size;
+    $('settleCount').textContent = entries.length;
+    $('settlePeople').textContent = peopleCount;
     $('bentoCountHint').textContent =
       `已選 ${peopleCount} 人 · ${entries.length} 項 · 待上傳 ${pendingCount} · 合計 ${fmt(totalSum)}`;
     // 注意:這裡只在「沒被送出鎖定」的時候才覆寫按鈕文字
@@ -1589,41 +1653,24 @@ window.cancelBento = async (person) => {
     btn.textContent = '上傳中…';
 
     const date = $('bentoDate').value || today();
-    const ledger = [];
-    let bentoSum = 0, subsidySum = 0;
+    const orders = [];
+    let mealSum = 0;
 
     entries.forEach(({ person, sel }) => {
       const label = displayLabel(sel);
-      const isSubsidy = label === '午餐補助';
-      if (isSubsidy) {
-        ledger.push({
-          date,
-          item: `${person} — 午餐補助`,
-          type: '支出',
-          income: '',
-          expense: sel.price,
-          handler
-        });
-        subsidySum += sel.price;
-      } else {
-        const itemLabel = sel.lessRice
-          ? `${person} — ${label}(少飯) — 便當`
-          : `${person} — ${label} — 便當`;
-        ledger.push({
-          date,
-          item: itemLabel,
-          type: '支出',
-          income: '',
-          expense: sel.price,
-          handler
-        });
-        bentoSum += sel.price;
-      }
+      orders.push({
+        date, person, item: label,
+        lessRice: !!sel.lessRice,
+        price: sel.price,
+        handler
+      });
+      mealSum += sel.price;
     });
 
     try {
-      await api('submitLunch', { ledger });
-      toast(`已上傳 ${entries.length} 筆訂餐 · 便當款 $${bentoSum} + 補貼款 $${subsidySum}`, 'success');
+      // 餐費不扣零用金,只寫進 lunch_orders
+      await api('submitLunchOrders', { orders });
+      toast(`已上傳 ${entries.length} 筆訂餐 · 餐費 $${mealSum}`, 'success');
       bentoSelections = {};
       setTimeout(refreshAll, 1200);
     } catch (e) {
@@ -1871,50 +1918,36 @@ function calcCartTotal() {
     const container = $('settleContent');
     const date = $('settleDate').value;
     if (!date) {
-      container.innerHTML = '<p class="empty-state" style="padding:20px;">選擇日期查看當天便當結算</p>';
+      container.innerHTML = '<p class="empty-state" style="padding:20px;">選擇日期查看當天餐費</p>';
       return;
     }
 
-    const dayRecords = getLunchByDate(date);
-    const bentoItems = dayRecords.filter(r => r.type === '便當');
-    const subsidyItems = dayRecords.filter(r => r.type === '補貼');
-
-    if (!bentoItems.length && !subsidyItems.length) {
-      container.innerHTML = `<p class="empty-state" style="padding:20px;">${date} 沒有便當記錄</p>`;
+    const rows = getLunchByDate(date);
+    if (!rows.length) {
+      container.innerHTML = `<p class="empty-state" style="padding:20px;">${escapeHtml(date)} 沒有點餐紀錄</p>`;
       return;
     }
 
-    const bentoSum = bentoItems.reduce((s, i) => s + Number(i.price || 0), 0);
-    const subsidySum = subsidyItems.reduce((s, i) => s + Number(i.price || 0), 0);
-    const totalSum = bentoSum + subsidySum;
-
-    let listHtml = '';
-    bentoItems.forEach(i => {
-      listHtml += `<li>
-        <span>${i.person} — ${i.bento}${i.lessRice==='少飯'?'(少飯)':''}<span class="s-type bento">便當</span></span>
-        <span>$${Number(i.price).toLocaleString()}</span>
-      </li>`;
-    });
-    subsidyItems.forEach(i => {
-      listHtml += `<li>
-        <span>${i.person} — 午餐補助<span class="s-type subsidy">補貼</span></span>
-        <span>$${Number(i.price).toLocaleString()}</span>
-      </li>`;
-    });
+    const total = rows.reduce((sum, r) => sum + Number(r.price || 0), 0);
+    const people = new Set(rows.map(r => r.person)).size;
+    const listHtml = rows.map(r => `<li>
+        <span>${escapeHtml(r.person)} — ${escapeHtml(r.item)}${r.lessRice ? '(少飯)' : ''}</span>
+        <span>$${Number(r.price || 0).toLocaleString()}</span>
+      </li>`).join('');
 
     container.innerHTML = `
       <div class="settle-grid">
         <div class="settle-item bento">
-          <span class="s-label">便當款 <span class="s-hint">${bentoItems.length}份 · 給便當店</span></span>
-          <span class="s-amount">$${bentoSum.toLocaleString()}</span>
+          <span class="s-label">份數</span>
+          <span class="s-amount">${rows.length}</span>
         </div>
         <div class="settle-item subsidy">
-          <span class="s-label">補貼款 <span class="s-hint">${subsidyItems.length}人 · 發給員工</span></span>
-          <span class="s-amount">$${subsidySum.toLocaleString()}</span>
+          <span class="s-label">人數</span>
+          <span class="s-amount">${people}</span>
         </div>
         <div class="settle-item total">
-          <span class="s-label">總餐費 <span class="s-hint">零用金支出</span></span>
-          <span class="s-amount">$${totalSum.toLocaleString()}</span>
+          <span class="s-label">餐費合計 <span class="s-hint">不扣零用金</span></span>
+          <span class="s-amount">$${total.toLocaleString()}</span>
         </div>
       </div>
       <ul class="settle-list">${listHtml}</ul>
@@ -2322,6 +2355,139 @@ function calcCartTotal() {
     }).join('');
   }
 
+  /* ============ 餐費(與零用金分離) ============ */
+  function setMealMonthNow() {
+    $('mealMonth').value = today().slice(0, 7);
+    renderMeal();
+  }
+
+  function personOrder(name) {
+    const i = BENTO_PEOPLE.indexOf(name);
+    return i === -1 ? 999 : i;
+  }
+
+  function renderMeal() {
+    if (!$('mealMonth')) return;
+    const ym = $('mealMonth').value || today().slice(0, 7);
+    const monthOrders = allLunchOrders.filter(o => String(o.date || '').startsWith(ym));
+
+    const monthByPerson = {};
+    let monthTotal = 0;
+    monthOrders.forEach(o => {
+      const v = Number(o.price || 0);
+      monthByPerson[o.person] = (monthByPerson[o.person] || 0) + v;
+      monthTotal += v;
+    });
+
+    const ordered = lunchTotals.reduce((s, t) => s + Number(t.ordered || 0), 0);
+    const paid    = lunchTotals.reduce((s, t) => s + Number(t.paid || 0), 0);
+    $('mealMonthTotal').textContent = fmt(monthTotal);
+    $('mealOrdered').textContent = fmt(ordered);
+    $('mealPaid').textContent = fmt(paid);
+    $('mealOwed').textContent = fmt(ordered - paid);
+
+    // 每人結算:有累計的人 + 本月有點餐的人
+    const names = Array.from(new Set(
+      lunchTotals.map(t => t.person).concat(Object.keys(monthByPerson))
+    )).filter(Boolean).sort((a, b) => personOrder(a) - personOrder(b));
+
+    const body = $('mealPersonBody');
+    if (!names.length) {
+      body.innerHTML = '<div class="mp-empty">還沒有點餐紀錄</div>';
+    } else {
+      body.innerHTML = names.map(n => {
+        const t = lunchTotals.find(x => x.person === n) || { ordered: 0, paid: 0, owed: 0 };
+        const m = monthByPerson[n] || 0;
+        const owed = Number(t.owed || 0);
+        const owedText = owed > 0 ? '未繳 $' + owed.toLocaleString()
+                       : (owed < 0 ? '多繳 $' + (-owed).toLocaleString() : '已結清');
+        const owedColor = owed > 0 ? 'var(--red)' : (owed < 0 ? 'var(--accent-soft)' : 'var(--live)');
+        return `<div class="mp-card${owed === 0 ? ' settled' : ''}">
+          <div class="mp-head">
+            <span class="mp-name">${escapeHtml(n)}</span>
+            <span class="mp-owed" style="color:${owedColor};">${owedText}</span>
+            ${owed > 0 ? `<button class="btn btn-outline btn-small" onclick="prefillPayment('${escapeHtml(n)}')">收款</button>` : ''}
+          </div>
+          <div class="mp-nums">
+            本月 ${m ? '$' + m.toLocaleString() : '$0'}<span class="sep">·</span>累計應付 $${Number(t.ordered || 0).toLocaleString()}<span class="sep">·</span>已繳 $${Number(t.paid || 0).toLocaleString()}
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+    // 收款紀錄
+    const ul = $('mealPayList');
+    if (!allLunchPayments.length) {
+      ul.innerHTML = '<li class="empty">還沒有收款紀錄</li>';
+    } else {
+      ul.innerHTML = allLunchPayments.map(pm => `<li>
+        <span>
+          <strong>${escapeHtml(pm.person)}</strong>
+          <span class="pay-date">${escapeHtml(pm.date)}</span>
+          ${pm.note ? `<span class="pay-note">${escapeHtml(pm.note)}</span>` : ''}
+        </span>
+        <span class="pay-amt">+$${Number(pm.amount || 0).toLocaleString()}</span>
+        <button class="ch-del" onclick="removeLunchPayment(${pm.id})" title="刪除這筆收款">×</button>
+      </li>`).join('');
+    }
+
+    // 當月明細
+    const byDate = {};
+    monthOrders.forEach(o => { (byDate[o.date] = byDate[o.date] || []).push(o); });
+    const dates = Object.keys(byDate).sort().reverse();
+    $('mealDetail').innerHTML = dates.length ? dates.map(d => {
+      const rows = byDate[d];
+      const sum = rows.reduce((x, o) => x + Number(o.price || 0), 0);
+      return `<div class="meal-day">
+        <div class="meal-day-head">
+          <span>${escapeHtml(d)}</span>
+          <span>$${sum.toLocaleString()} · ${rows.length} 份</span>
+        </div>
+        <ul class="settle-list">${rows.map(o => `<li>
+          <span>${escapeHtml(o.person)} — ${escapeHtml(o.item)}${o.lessRice ? '(少飯)' : ''}</span>
+          <span>$${Number(o.price || 0).toLocaleString()}</span>
+        </li>`).join('')}</ul>
+      </div>`;
+    }).join('') : '<p class="empty-state" style="padding:16px;">這個月還沒有點餐紀錄</p>';
+  }
+
+  window.prefillPayment = (name) => {
+    const sel = $('payPerson');
+    if (Array.from(sel.options).some(o => o.value === name)) sel.value = name;
+    const t = lunchTotals.find(x => x.person === name);
+    $('payAmount').value = (t && t.owed > 0) ? t.owed : '';
+    $('payDate').value = $('payDate').value || today();
+    $('payAmount').focus();
+  };
+
+  function submitLunchPayment() {
+    runSubmit('lunchPay', 'submitPayBtn', '登記中…', async () => {
+      const person = $('payPerson').value;
+      const amount = Number($('payAmount').value || 0);
+      if (!person) return toast('請選擇姓名', 'error');
+      if (!(amount > 0)) return toast('請輸入金額', 'error');
+      const date = $('payDate').value || today();
+      try {
+        await api('addLunchPayment', {
+          payment: { date, person, amount, note: $('payNote').value.trim(), handler: person }
+        });
+        toast(`已登記 ${person} 繳款 ${fmt(amount)}`, 'success');
+        $('payAmount').value = '';
+        $('payNote').value = '';
+        await refreshAll();
+      } catch (e) { toast('登記失敗:' + e.message, 'error'); }
+    });
+  }
+
+  window.removeLunchPayment = async (id) => {
+    if (!window.confirm('確定刪除這筆收款紀錄?')) return;
+    try {
+      await api('deleteLunchPayment', { id });
+      toast('已刪除收款紀錄', 'success');
+      await refreshAll();
+    } catch (e) { toast('刪除失敗:' + e.message, 'error'); }
+  };
+
   function updateTotals() {
     let inc = 0, exp = 0, mInc = 0, mExp = 0;
     const ym = today().slice(0,7);
@@ -2366,8 +2532,14 @@ function calcCartTotal() {
     bindHandlerOther('incomeHandler','incomeHandlerOther');
     bindHandlerOther('expenseHandler','expenseHandlerOther');
     bindHandlerOther('countHandler','countHandlerOther');
-    ['bentoDate','pkgDate','salesDate','refillDate','incomeDate','expenseDate','settleDate','countDate'].forEach(id => {
+    ['bentoDate','pkgDate','salesDate','refillDate','incomeDate','expenseDate','settleDate','countDate','payDate'].forEach(id => {
       $(id).value = today();
+    });
+    $('mealMonth').value = today().slice(0, 7);
+    BENTO_PEOPLE.forEach(n => {
+      const opt = document.createElement('option');
+      opt.value = n; opt.textContent = n;
+      $('payPerson').appendChild(opt);
     });
     renderProductGrid();
     renderDenomRows();
