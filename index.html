@@ -672,6 +672,39 @@
   .count-history .ch-note {
     margin-top: 5px; font-size: 13px; color: var(--ink-soft); font-style: italic;
   }
+  /* ===== 可收合區塊 ===== */
+  .section-toggle {
+    width: 100%; display: flex; align-items: center; gap: 10px;
+    background: white; border: 1px solid var(--line); border-radius: 10px;
+    padding: 13px 16px; margin-bottom: 16px; cursor: pointer; text-align: left;
+    font-family: 'Noto Serif TC', serif; color: var(--ink);
+    transition: border-color 0.2s, background 0.2s;
+  }
+  .section-toggle:hover { border-color: var(--accent-soft); }
+  .section-toggle .st-title {
+    font-family: 'Fraunces', serif; font-weight: 500; font-size: 17px;
+  }
+  .section-toggle .st-title .en-sub {
+    font-style: italic; font-size: 13px; color: var(--ink-faded); margin-left: 8px;
+  }
+  .section-toggle .st-meta {
+    margin-left: auto; font-family: 'JetBrains Mono', monospace;
+    font-size: 12px; color: var(--ink-faded); text-align: right; line-height: 1.5;
+  }
+  .section-toggle .st-chevron {
+    flex: 0 0 auto; color: var(--ink-faded); transition: transform 0.22s ease;
+  }
+  .section-toggle[aria-expanded="true"] { background: rgba(196,165,116,0.10); }
+  .section-toggle[aria-expanded="true"] .st-chevron { transform: rotate(180deg); }
+  .section-body[hidden] { display: none; }
+  .section-body { animation: fadeIn 0.22s ease; }
+  @media (max-width: 430px) {
+    .section-toggle { padding: 12px 13px; gap: 8px; }
+    .section-toggle .st-title { font-size: 16px; }
+    .section-toggle .st-title .en-sub { display: none; }
+    .section-toggle .st-meta { font-size: 11px; }
+  }
+
   /* ===== 餐費 ===== */
   .meal-note {
     background: rgba(196,165,116,0.14); border: 1px solid var(--line);
@@ -1020,12 +1053,22 @@
     <div class="panel-header">
       <div class="panel-title">記錄 <span class="en">Cash Count &amp; Records</span></div>
       <div style="display:flex; gap:8px;">
-        <button class="btn btn-outline btn-small" onclick="clearCountInputs()">清空張數</button>
         <button class="btn btn-outline btn-small" onclick="refreshAll()">↻ 重新載入</button>
       </div>
     </div>
 
-    <h3 class="meal-h3">現金清點 <span class="en-sub">Cash Count</span></h3>
+    <button type="button" class="section-toggle" id="countToggle"
+            onclick="toggleCountSection()" aria-expanded="false" aria-controls="countSection">
+      <span class="st-title">現金清點 <span class="en-sub">Cash Count</span></span>
+      <span class="st-meta" id="countToggleMeta">—</span>
+      <svg class="st-chevron" viewBox="0 0 24 24" width="18" height="18" fill="none"
+           stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+           aria-hidden="true"><polyline points="6 9 12 15 18 9"></polyline></svg>
+    </button>
+    <div class="section-body" id="countSection" hidden>
+    <div style="display:flex; justify-content:flex-end; margin-bottom:12px;">
+      <button class="btn btn-outline btn-small" onclick="clearCountInputs()">清空張數</button>
+    </div>
     <div class="form-row cols-2">
       <div><label>清點日期</label><input type="date" id="countDate" onchange="onCountDateChange()"></div>
       <div><label>清點人</label><select id="countHandler"></select></div>
@@ -1063,6 +1106,7 @@
     <div class="divider"></div>
     <h3 style="font-family:'Fraunces',serif; font-weight:500; font-size:17px; margin-bottom:14px;">清點紀錄 <span style="font-style:italic; font-size:13px; color:var(--ink-faded); margin-left:8px;">Count History</span></h3>
     <ul class="count-history" id="countHistory"></ul>
+    </div><!-- /#countSection -->
 
     <div class="divider"></div>
     <h3 class="meal-h3">帳目總覽 <span class="en-sub">Overview</span></h3>
@@ -1198,7 +1242,7 @@
       // 也不經過這本帳,所以金額記 0,只用來標記「誰那天是領補助、沒訂便當」。
       store: '午餐補助',
       items: [
-        { name: '午餐補助', price: 0, priceLabel: '公司發·不計費' }
+        { name: '午餐補助', price: 0, priceLabel: '' }   // priceLabel 空字串 = 選單上只顯示品名
       ]
     }
   ];
@@ -1427,7 +1471,10 @@
       document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
       tab.classList.add('active');
       $('panel-' + tab.dataset.panel).classList.add('active');
-      if (tab.dataset.panel === 'records') loadCountForDate();
+      if (tab.dataset.panel === 'records') {
+        if ($('countToggle').getAttribute('aria-expanded') === 'true') loadCountForDate();
+        updateCountToggleMeta();
+      }
       if (tab.dataset.panel === 'meal') renderMeal();
     });
   });
@@ -1456,6 +1503,12 @@
     return v;
   }
 
+  // priceLabel 設成空字串的品項(午餐補助),選單上只顯示名稱、不加價格
+  function priceSuffix(b) {
+    const label = b.priceLabel !== undefined ? b.priceLabel : '$' + b.price;
+    return label ? ' · ' + label : '';
+  }
+
   function isHefengItem(itemName) {
     const store = BENTO_STORES.find(s => s.store === '合豐便當');
     return !!store && store.items.some(i => i.name === itemName);
@@ -1467,7 +1520,7 @@
     const options = '<option value="">+ 新增品項</option>' +
       BENTO_STORES.map(store => '<optgroup label="' + store.store + '">' +
         store.items.map(b =>
-          `<option value="${b.name}">${b.name} · ${b.priceLabel || ('$' + b.price)}</option>`
+          `<option value="${b.name}">${b.name}${priceSuffix(b)}</option>`
         ).join('') +
       '</optgroup>').join('');
 
@@ -2235,6 +2288,7 @@ function calcCartTotal() {
     btn.disabled = !anyInput || diff === 0 || adjusted;
     btn.textContent = adjusted ? '此日已登記過調整' : '登記差額調整';
 
+    updateCountToggleMeta();
     return { denoms, counted, book, diff, anyInput, date };
   }
 
@@ -2366,6 +2420,40 @@ function calcCartTotal() {
   }
 
   /* ============ 餐費(與零用金分離) ============ */
+  /* ---- 現金清點:可收合 ---- */
+  const COUNT_OPEN_KEY = 'niyan_count_open';
+
+  function setCountSectionOpen(open) {
+    const btn = $('countToggle'), body = $('countSection');
+    if (!btn || !body) return;
+    btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    body.hidden = !open;
+    try { localStorage.setItem(COUNT_OPEN_KEY, open ? '1' : '0'); } catch (_) {}
+  }
+
+  function toggleCountSection() {
+    const open = $('countToggle').getAttribute('aria-expanded') !== 'true';
+    setCountSectionOpen(open);
+    if (open) loadCountForDate();
+  }
+
+  // 收起來的時候,標題列要看得出今天清點了沒
+  function updateCountToggleMeta() {
+    const el = $('countToggleMeta');
+    if (!el) return;
+    const date = ($('countDate') && $('countDate').value) || today();
+    const saved = allCounts.find(c => c.date === date);
+    if (!saved) {
+      el.textContent = date + ' 尚未清點';
+      el.style.color = 'var(--ink-faded)';
+      return;
+    }
+    const diff = Number(saved.diff || 0);
+    el.textContent = date + ' · ' + (diff === 0 ? '相符'
+      : (diff > 0 ? '多 $' + diff.toLocaleString() : '少 $' + (-diff).toLocaleString()));
+    el.style.color = diff === 0 ? 'var(--live)' : 'var(--red)';
+  }
+
   function setMealMonthNow() {
     $('mealMonth').value = today().slice(0, 7);
     renderMeal();
@@ -2559,6 +2647,9 @@ function calcCartTotal() {
     });
     renderProductGrid();
     renderDenomRows();
+    let countOpen = false;
+    try { countOpen = localStorage.getItem(COUNT_OPEN_KEY) === '1'; } catch (_) {}
+    setCountSectionOpen(countOpen);
 
     await refreshAll();
     startPolling();
