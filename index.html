@@ -785,7 +785,6 @@
     <button class="tab" data-panel="package"><span class="num"></span>包裹</button>
     <button class="tab" data-panel="sales"><span class="num"></span>銷售</button>
     <button class="tab" data-panel="extra"><span class="num"></span>收支</button>
-    <button class="tab" data-panel="count"><span class="num"></span>清點</button>
     <button class="tab" data-panel="records"><span class="num"></span>記錄</button>
   </div>
 
@@ -844,11 +843,14 @@
     </div>
 
     <div class="meal-note">
-      餐費與零用金<strong>分開計算</strong> — 2026-10-02 起點餐只記在這一頁,不會動到零用金餘額。
+      餐費與零用金<strong>分開計算</strong> — 2026-10-02 起點餐只記在這一頁,不會動到零用金餘額。<br>
+      便當金額是<strong>要跟各人收的全額</strong>;「午餐補助」記 0 元,只是標記那天誰沒訂便當 —
+      公司發的 100 元補助含在月薪裡,不走這本帳。
     </div>
 
     <div class="stats-row">
       <div class="stat-box"><div class="stat-label">本月餐費</div><div class="stat-value" id="mealMonthTotal">—</div></div>
+      <div class="stat-box"><div class="stat-label">本月補助人次</div><div class="stat-value" id="mealSubsidy">—</div></div>
       <div class="stat-box"><div class="stat-label">累計應付</div><div class="stat-value" id="mealOrdered">—</div></div>
       <div class="stat-box income"><div class="stat-label">累計已繳</div><div class="stat-value" id="mealPaid">—</div></div>
       <div class="stat-box expense"><div class="stat-label">尚未收齊</div><div class="stat-value" id="mealOwed">—</div></div>
@@ -1014,15 +1016,16 @@
     <input type="text" id="expenseHandlerOther" placeholder="其他經手人姓名" style="display:none; margin-top:8px;">
   </div>
 
-  <div class="panel" id="panel-count">
+  <div class="panel" id="panel-records">
     <div class="panel-header">
-      <div class="panel-title">清點 <span class="en">Cash Count</span></div>
+      <div class="panel-title">記錄 <span class="en">Cash Count &amp; Records</span></div>
       <div style="display:flex; gap:8px;">
         <button class="btn btn-outline btn-small" onclick="clearCountInputs()">清空張數</button>
         <button class="btn btn-outline btn-small" onclick="refreshAll()">↻ 重新載入</button>
       </div>
     </div>
 
+    <h3 class="meal-h3">現金清點 <span class="en-sub">Cash Count</span></h3>
     <div class="form-row cols-2">
       <div><label>清點日期</label><input type="date" id="countDate" onchange="onCountDateChange()"></div>
       <div><label>清點人</label><select id="countHandler"></select></div>
@@ -1060,15 +1063,9 @@
     <div class="divider"></div>
     <h3 style="font-family:'Fraunces',serif; font-weight:500; font-size:17px; margin-bottom:14px;">清點紀錄 <span style="font-style:italic; font-size:13px; color:var(--ink-faded); margin-left:8px;">Count History</span></h3>
     <ul class="count-history" id="countHistory"></ul>
-  </div>
 
-  <div class="panel" id="panel-records">
-    <div class="panel-header">
-      <div class="panel-title">記錄 <span class="en">All Records</span></div>
-      <div style="display:flex; gap:8px;">
-        <button class="btn btn-outline btn-small" onclick="refreshAll()">↻ 重新載入</button>
-      </div>
-    </div>
+    <div class="divider"></div>
+    <h3 class="meal-h3">帳目總覽 <span class="en-sub">Overview</span></h3>
     <div class="stats-row">
       <div class="stat-box income"><div class="stat-label">本月收入</div><div class="stat-value" id="monthIncome">—</div></div>
       <div class="stat-box expense"><div class="stat-label">本月支出</div><div class="stat-value" id="monthExpense">—</div></div>
@@ -1196,6 +1193,14 @@
         { name: '豬排(一份)', price: 70 }, { name: '鴨肉(一份)', price: 90 }
       ]
     },
+    {
+      // 公司發的 100 元餐費補助,會直接加在月薪裡 —— 不是要跟同事收的錢,
+      // 也不經過這本帳,所以金額記 0,只用來標記「誰那天是領補助、沒訂便當」。
+      store: '午餐補助',
+      items: [
+        { name: '午餐補助', price: 0, priceLabel: '公司發·不計費' }
+      ]
+    }
   ];
   const BENTO_VARIANTS = {
     '滷肉飯': { sizePrice: { '小': 45, '大': 55 } },
@@ -1223,6 +1228,11 @@
     if (!cfg) return;
     sel.price = isVariantComplete(sel) ? (cfg.sizePrice ? cfg.sizePrice[sel.size] : cfg.price) : 0;
   }
+  // 午餐補助記 0 元(公司發的補助含在月薪裡,不跟同事收),顯示成「補助」比 $0 清楚
+  function priceText(price) {
+    return Number(price) > 0 ? '$' + Number(price).toLocaleString() : '補助';
+  }
+
   function displayLabel(sel) {
     const cfg = BENTO_VARIANTS[sel.item];
     if (!cfg) return sel.item;
@@ -1417,7 +1427,7 @@
       document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
       tab.classList.add('active');
       $('panel-' + tab.dataset.panel).classList.add('active');
-      if (tab.dataset.panel === 'count') loadCountForDate();
+      if (tab.dataset.panel === 'records') loadCountForDate();
       if (tab.dataset.panel === 'meal') renderMeal();
     });
   });
@@ -1457,7 +1467,7 @@
     const options = '<option value="">+ 新增品項</option>' +
       BENTO_STORES.map(store => '<optgroup label="' + store.store + '">' +
         store.items.map(b =>
-          `<option value="${b.name}">${b.name} · ${b.variant ? b.priceLabel : '$' + b.price}</option>`
+          `<option value="${b.name}">${b.name} · ${b.priceLabel || ('$' + b.price)}</option>`
         ).join('') +
       '</optgroup>').join('');
 
@@ -1474,7 +1484,7 @@
         <li class="item-row-group">
           <div class="item-row">
             <span class="item-name">${it.item}${it.lessRice ? '<span class="meta">(少飯)</span>' : ''}</span>
-            <span class="item-price">$${it.price}</span>
+            <span class="item-price">${priceText(it.price)}</span>
             <span class="item-tag">✓已上傳</span>
           </div>
         </li>
@@ -1486,7 +1496,7 @@
         <li class="item-row-group">
           <div class="item-row">
             <span class="item-name">${label}${it.lessRice ? '<span class="meta">(少飯)</span>' : ''}</span>
-            <span class="item-price pending">${complete ? '$' + it.price : '未選規格'}</span>
+            <span class="item-price pending">${complete ? priceText(it.price) : '未選規格'}</span>
             ${isHefengItem(it.item) ? `
             <label class="less-rice-inline">
               <input type="checkbox" ${it.lessRice ? 'checked' : ''} onchange="toggleLessRiceItem('${person}', ${idx}, this.checked)">少飯
@@ -1512,7 +1522,7 @@
       card.innerHTML = `
         <div class="name">
           <span>${person}</span>
-          <span class="price-tag" id="price-${person}">${allItems.length ? '$' + total : '—'}</span>
+          <span class="price-tag" id="price-${person}">${allItems.length ? priceText(total) : '—'}</span>
         </div>
         ${allItems.length ? `<ul class="item-list">${rowsHtml}</ul>` : ''}
         <select onchange="addBentoItem('${person}', this.value); this.value='';">${options}</select>
@@ -1615,7 +1625,7 @@ window.cancelBento = async (person) => {
       if (confirmed) li.className = 'confirmed-row';
       li.innerHTML = `
         <span>${person} — ${label}${sel.lessRice?'<span class="meta">(少飯)</span>':''}${confirmed?'<span class="meta">· 已上傳</span>':''}${!complete?'<span class="meta" style="color:var(--accent);">(尚未選規格)</span>':''}</span>
-        <span class="amount">${complete ? '- $' + sel.price : '—'}</span>
+        <span class="amount">${complete ? priceText(sel.price) : '—'}</span>
       `;
       list.appendChild(li);
     });
@@ -1932,7 +1942,7 @@ function calcCartTotal() {
     const people = new Set(rows.map(r => r.person)).size;
     const listHtml = rows.map(r => `<li>
         <span>${escapeHtml(r.person)} — ${escapeHtml(r.item)}${r.lessRice ? '(少飯)' : ''}</span>
-        <span>$${Number(r.price || 0).toLocaleString()}</span>
+        <span>${priceText(r.price)}</span>
       </li>`).join('');
 
     container.innerHTML = `
@@ -2372,16 +2382,22 @@ function calcCartTotal() {
     const monthOrders = allLunchOrders.filter(o => String(o.date || '').startsWith(ym));
 
     const monthByPerson = {};
-    let monthTotal = 0;
+    const subsidyDays = {};          // 本月各自領了幾天午餐補助(算月薪用,不是欠款)
+    let monthTotal = 0, subsidyTotal = 0;
     monthOrders.forEach(o => {
       const v = Number(o.price || 0);
       monthByPerson[o.person] = (monthByPerson[o.person] || 0) + v;
       monthTotal += v;
+      if (o.item === '午餐補助') {
+        subsidyDays[o.person] = (subsidyDays[o.person] || 0) + 1;
+        subsidyTotal++;
+      }
     });
 
     const ordered = lunchTotals.reduce((s, t) => s + Number(t.ordered || 0), 0);
     const paid    = lunchTotals.reduce((s, t) => s + Number(t.paid || 0), 0);
     $('mealMonthTotal').textContent = fmt(monthTotal);
+    $('mealSubsidy').textContent = subsidyTotal ? `${subsidyTotal} 人次 · $${(subsidyTotal * 100).toLocaleString()}` : '—';
     $('mealOrdered').textContent = fmt(ordered);
     $('mealPaid').textContent = fmt(paid);
     $('mealOwed').textContent = fmt(ordered - paid);
@@ -2409,7 +2425,7 @@ function calcCartTotal() {
             ${owed > 0 ? `<button class="btn btn-outline btn-small" onclick="prefillPayment('${escapeHtml(n)}')">收款</button>` : ''}
           </div>
           <div class="mp-nums">
-            本月 ${m ? '$' + m.toLocaleString() : '$0'}<span class="sep">·</span>累計應付 $${Number(t.ordered || 0).toLocaleString()}<span class="sep">·</span>已繳 $${Number(t.paid || 0).toLocaleString()}
+            本月 ${m ? '$' + m.toLocaleString() : '$0'}<span class="sep">·</span>累計應付 $${Number(t.ordered || 0).toLocaleString()}<span class="sep">·</span>已繳 $${Number(t.paid || 0).toLocaleString()}${subsidyDays[n] ? `<span class="sep">·</span>補助 ${subsidyDays[n]} 天` : ''}
           </div>
         </div>`;
       }).join('');
@@ -2445,7 +2461,7 @@ function calcCartTotal() {
         </div>
         <ul class="settle-list">${rows.map(o => `<li>
           <span>${escapeHtml(o.person)} — ${escapeHtml(o.item)}${o.lessRice ? '(少飯)' : ''}</span>
-          <span>$${Number(o.price || 0).toLocaleString()}</span>
+          <span>${priceText(o.price)}</span>
         </li>`).join('')}</ul>
       </div>`;
     }).join('') : '<p class="empty-state" style="padding:16px;">這個月還沒有點餐紀錄</p>';
